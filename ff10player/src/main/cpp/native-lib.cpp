@@ -15,7 +15,15 @@ Y10FFmpeg *ffmpeg = NULL;
 CallJava *callJava = NULL;
 JavaVM *javaVM = NULL;
 PlayStatus *playStatus = NULL;
+pthread_t startThread;
 bool nativeExited = false;//防止重复退出
+
+void *startThreadCallback(void *data) {
+    Y10FFmpeg *fFmpeg = (Y10FFmpeg *)data;
+    fFmpeg->start();
+    pthread_exit(&startThread);
+}
+
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_stan_ff10player_FF10Player_nPrepare(JNIEnv *env, jobject instance, jstring jstr) {
@@ -37,7 +45,7 @@ extern "C"
 JNIEXPORT jint JNICALL
 Java_com_stan_ff10player_FF10Player_nStart(JNIEnv *env, jobject instance) {
     if (ffmpeg != NULL) {
-        ffmpeg->start();
+        pthread_create(&startThread, NULL, startThreadCallback, ffmpeg);
     }
     return 0;
 }
@@ -93,5 +101,14 @@ Java_com_stan_ff10player_FF10Player_nStop(JNIEnv *env, jobject instance) {
         }
     }
     nativeExited = false;
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_stan_ff10player_FF10Player_nSeek(JNIEnv *env, jobject instance, jint secs) {
+    if(ffmpeg != NULL) {
+        ffmpeg->seek(secs);
+    }
     return 0;
 }

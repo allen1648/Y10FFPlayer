@@ -6,6 +6,7 @@ class PlayStatus {
 public:
     bool mExit;//是否停止从
     bool mLoad = true;
+    bool mSeeking = false;
 
 public:
     PlayStatus();

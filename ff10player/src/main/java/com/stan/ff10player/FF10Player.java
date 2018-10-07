@@ -1,5 +1,7 @@
 package com.stan.ff10player;
 
+import android.util.Log;
+
 import com.stan.ff10player.listener.OnErrorListener;
 import com.stan.ff10player.listener.OnLoadListener;
 import com.stan.ff10player.listener.OnPreparedListener;
@@ -19,12 +21,13 @@ public class FF10Player {
         System.loadLibrary("swscale-4");
     }
 
-    private String mSourceUrl;
     private OnPreparedListener mOnPrepareListener;
     private OnResumePauseListener mOnResumePauseListener;
     private OnTimeChangedListener mOnTimeChangedListener;
     private OnLoadListener mOnLoadListener;
     private OnErrorListener mOnErrorListener;
+    private String mSourceUrl;
+    private int mDuration;
 
     public void setOnPrepareListener(OnPreparedListener listener) {
         this.mOnPrepareListener = listener;
@@ -87,6 +90,10 @@ public class FF10Player {
         }).start();
     }
 
+    public void seek(int secs) {
+        nSeek(secs);
+    }
+
     /* called from jni */
     private void onCallPrepared() {
         if (mOnPrepareListener != null) {
@@ -115,6 +122,12 @@ public class FF10Player {
         }
     }
 
+    /* called from jni */
+    private void onCallComplete() {
+        stop();
+        Log.i("yyl", "onCallComplete java");
+    }
+
     private native int nPrepare(String url);
 
     private native int nStart();
@@ -124,4 +137,6 @@ public class FF10Player {
     private native int nPause();
 
     private native int nStop();
+
+    private native int nSeek(int secs);
 }

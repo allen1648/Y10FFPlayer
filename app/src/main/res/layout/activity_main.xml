@@ -31,6 +31,12 @@
         android:onClick="stop"
         android:text="stop" />
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="seek"
+        android:text="seek" />
+
     <TextView
         android:id="@+id/tv_progress"
         android:text="111111"

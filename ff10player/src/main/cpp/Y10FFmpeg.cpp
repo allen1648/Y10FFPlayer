@@ -21,10 +21,12 @@ Y10FFmpeg::Y10FFmpeg(PlayStatus *playStatus, CallJava *callJava, const char *url
     this->mCallJava = callJava;
     this->mUrl = url;
     pthread_mutex_init(&mInitMutex, NULL);
+    pthread_mutex_init(&mSeekMutex, NULL);
 }
 
 Y10FFmpeg::~Y10FFmpeg() {
     pthread_mutex_destroy(&mInitMutex);
+    pthread_mutex_destroy(&mSeekMutex);
 }
 
 void Y10FFmpeg::prepare() {
@@ -55,14 +57,16 @@ void Y10FFmpeg::decodeFFmpegThread() {
         LOGE("invalid url! :%s", mUrl);
         pthread_mutex_unlock(&mInitMutex);
         mDecodeExit = true;
-        mCallJava->onCallError(CHILD_THREAD, 1001, "open input failed");
+        const char* cstr = "open input failed";
+        mCallJava->onCallError(CHILD_THREAD, 1001, cstr);
         return;
     }
     //找音频流
     if (avformat_find_stream_info(mAVFormatContext, NULL) < 0) {
         pthread_mutex_unlock(&mInitMutex);
         mDecodeExit = true;
-        mCallJava->onCallError(CHILD_THREAD, 1002, "can't find stream");
+        const char* cstr = "can't find stream";
+        mCallJava->onCallError(CHILD_THREAD, 1002, cstr);
         return;
     }
     int streamsCount = mAVFormatContext->nb_streams;
@@ -76,6 +80,7 @@ void Y10FFmpeg::decodeFFmpegThread() {
                 mAudio->mCodecpar = mAVFormatContext->streams[i]->codecpar;
                 mAudio->mDuration = mAVFormatContext->duration / AV_TIME_BASE;
                 mAudio->mTimeBase = mAVFormatContext->streams[i]->time_base;
+                mDuration = mAudio->mDuration;
             }
         }
     }
@@ -84,7 +89,8 @@ void Y10FFmpeg::decodeFFmpegThread() {
     if (!codec) {
         pthread_mutex_unlock(&mInitMutex);
         mDecodeExit = true;
-        mCallJava->onCallError(CHILD_THREAD, 1003, "can't find codec");
+        const char* cstr = "can't find codec";
+        mCallJava->onCallError(CHILD_THREAD, 1003, cstr);
         return;
     }
     //获取解码器上下文
@@ -92,14 +98,16 @@ void Y10FFmpeg::decodeFFmpegThread() {
     if (!mAudio->mAVCodecContext) {
         pthread_mutex_unlock(&mInitMutex);
         mDecodeExit = true;
-        mCallJava->onCallError(CHILD_THREAD, 1004, "can't alloc new decode context");
+        const char* cstr = "can't alloc new decode context";
+        mCallJava->onCallError(CHILD_THREAD, 1004, cstr);
         return;
     }
     //把解码器信息复制到刚申请的解码器上下文内存中
     if (avcodec_parameters_to_context(mAudio->mAVCodecContext, mAudio->mCodecpar)) {
         pthread_mutex_unlock(&mInitMutex);
         mDecodeExit = true;
-        mCallJava->onCallError(CHILD_THREAD, 1005, "can't fill decode context");
+        const char* cstr = "can't fill decode context";
+        mCallJava->onCallError(CHILD_THREAD, 1005, cstr);
         return;
     }
     //用解码器打开流
@@ -107,7 +115,8 @@ void Y10FFmpeg::decodeFFmpegThread() {
         LOGE("can't open audio stream");
         pthread_mutex_unlock(&mInitMutex);
         mDecodeExit = true;
-        mCallJava->onCallError(CHILD_THREAD, 1006, "can't open audio stream");
+        const char* cstr = "can't open audio stream";
+        mCallJava->onCallError(CHILD_THREAD, 1006, cstr);
         return;
     }
 
@@ -130,8 +139,19 @@ void Y10FFmpeg::start() {
     mAudio->start();
     int count = 0;
     while (mPlayStatus != NULL && !mPlayStatus->mExit) {
+        if(mPlayStatus->mSeeking) {
+            continue;
+        }
+        if(mAudio->mY10Queue->getQueueSize() > 40) {
+            continue;
+        }
         AVPacket *avPacket = av_packet_alloc();
-        if (av_read_frame(mAVFormatContext, avPacket) == 0) {
+
+        pthread_mutex_lock(&mSeekMutex);
+        int ret = av_read_frame(mAVFormatContext, avPacket);
+        pthread_mutex_unlock(&mSeekMutex);
+
+        if (ret == 0) {
             if (avPacket->stream_index == mAudio->mStreamIndex) {//如果是音频流
                 //解码操作
                 count++;
@@ -158,6 +178,7 @@ void Y10FFmpeg::start() {
         }
     }
     mDecodeExit = true;
+    mCallJava->onCallComplete(CHILD_THREAD);
     if (LOG_DEBUG) {
         LOGD("解码完成");
     }
@@ -177,13 +198,27 @@ void Y10FFmpeg::pause() {
     }
 }
 
+void Y10FFmpeg::seek(int64_t secs) {
+    if (mDuration < 0) {
+        return;
+    }
+
+    if (secs >= 0 && secs <= mDuration) {
+        mPlayStatus->mSeeking = true;
+        mAudio->mY10Queue->releaseQueue();
+        mAudio->mClockTime = 0;
+        mAudio->mLastTime = 0;
+        pthread_mutex_lock(&mSeekMutex);
+        int64_t realSecs = secs * AV_TIME_BASE;
+        avformat_seek_file(mAVFormatContext, -1, INT64_MIN, realSecs, INT64_MAX, 0);
+        pthread_mutex_unlock(&mSeekMutex);
+        mPlayStatus->mSeeking = false;
+    }
+}
+
 void Y10FFmpeg::release() {
     if(LOG_DEBUG) {
         LOGI("release ffmpeg");
-    }
-
-    if(mPlayStatus->mExit) {
-        return;
     }
 
     mPlayStatus->mExit = true;

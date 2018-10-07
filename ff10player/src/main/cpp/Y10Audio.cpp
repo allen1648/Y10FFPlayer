@@ -229,6 +229,7 @@ void Y10Audio::pause() {
 }
 
 void Y10Audio::release() {
+    LOGI("release audio");
     if(pcmPlayerImpl != NULL) {
         (*pcmPlayerImpl)->SetPlayState(pcmPlayerImpl,  SL_PLAYSTATE_STOPPED);
     }

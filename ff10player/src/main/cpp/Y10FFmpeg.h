@@ -16,12 +16,14 @@ class Y10FFmpeg {
 public:
     pthread_t mDecodeThread;//解码线程
     pthread_mutex_t mInitMutex;//初始化的锁
+    pthread_mutex_t mSeekMutex;//seek的锁
     AVFormatContext *mAVFormatContext = NULL;
     Y10Audio *mAudio = NULL;//ffmpeg prepare的时候会创建
     CallJava *mCallJava = NULL;
     PlayStatus *mPlayStatus = NULL;
     const char *mUrl = NULL;
     bool mDecodeExit = false;
+    int mDuration = 0;
 public:
     Y10FFmpeg(PlayStatus *playStatus, CallJava *callJava, const char *url);
 
@@ -33,6 +35,7 @@ public:
     void resume();
     void pause();
     void release();
+    void seek(int64_t secs);
 };
 
 #endif //INC_10FFMPEGPLAYER_Y10FFMPEG_H
