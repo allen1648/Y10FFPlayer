@@ -15,7 +15,7 @@ Y10FFmpeg *ffmpeg = NULL;
 CallJava *callJava = NULL;
 JavaVM *javaVM = NULL;
 PlayStatus *playStatus = NULL;
-
+bool nativeExited = false;//防止重复退出
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_stan_ff10player_FF10Player_nPrepare(JNIEnv *env, jobject instance, jstring jstr) {
@@ -24,6 +24,7 @@ Java_com_stan_ff10player_FF10Player_nPrepare(JNIEnv *env, jobject instance, jstr
         if (callJava == NULL) {
             callJava = new CallJava(javaVM, env, &instance);
         }
+        callJava->onCallPrepared(MAIN_THREAD);
         playStatus = new PlayStatus();
         ffmpeg = new Y10FFmpeg(playStatus, callJava, url);
     }
@@ -74,6 +75,10 @@ Java_com_stan_ff10player_FF10Player_nPause(JNIEnv *env, jobject instance) {
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_stan_ff10player_FF10Player_nStop(JNIEnv *env, jobject instance) {
+    if(nativeExited) {
+        return 0;
+    }
+    nativeExited = true;
     if (ffmpeg != NULL) {
         ffmpeg->release();
         delete (ffmpeg);
@@ -87,5 +92,6 @@ Java_com_stan_ff10player_FF10Player_nStop(JNIEnv *env, jobject instance) {
             playStatus = NULL;
         }
     }
+    nativeExited = false;
     return 0;
 }

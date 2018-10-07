@@ -1,5 +1,6 @@
 package com.stan.ff10player;
 
+import com.stan.ff10player.listener.OnErrorListener;
 import com.stan.ff10player.listener.OnLoadListener;
 import com.stan.ff10player.listener.OnPreparedListener;
 import com.stan.ff10player.listener.OnResumePauseListener;
@@ -23,6 +24,7 @@ public class FF10Player {
     private OnResumePauseListener mOnResumePauseListener;
     private OnTimeChangedListener mOnTimeChangedListener;
     private OnLoadListener mOnLoadListener;
+    private OnErrorListener mOnErrorListener;
 
     public void setOnPrepareListener(OnPreparedListener listener) {
         this.mOnPrepareListener = listener;
@@ -40,13 +42,16 @@ public class FF10Player {
         this.mOnLoadListener = listener;
     }
 
+    public void setOnErrorListener(OnErrorListener listener) {
+        this.mOnErrorListener = listener;
+    }
+
     public void setDataSourceAndPrepare(String url) {
         mSourceUrl = url;
         prepare();
     }
 
     private void prepare() {
-        onCallLoaded(true);
         nPrepare(mSourceUrl);
     }
 
@@ -98,9 +103,15 @@ public class FF10Player {
 
     /* called from jni */
     private void onCallTimeChanged(int currentTime, int totalTime) {
-//        Log.i("yyl", "onCallTimeChanged..."+currentTime+" "+totalTime);
         if (mOnTimeChangedListener != null) {
             mOnTimeChangedListener.onTimeChanged(currentTime, totalTime);
+        }
+    }
+
+    /* called from jni */
+    private void onCallError(int code, String msg) {
+        if (mOnErrorListener != null) {
+            mOnErrorListener.onError(code, msg);
         }
     }
 

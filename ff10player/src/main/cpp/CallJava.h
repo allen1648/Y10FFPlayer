@@ -33,6 +33,7 @@ public:
     void onCallPrepared(int type);
     void onCallLoad(int type, bool load);
     void onCallTimeChanged(int type, int curr, int total);
+    void onCallError(int type, int code, char *msg);
 };
 
 #endif //INC_10FFMPEGPLAYER_CALLJAVA_H

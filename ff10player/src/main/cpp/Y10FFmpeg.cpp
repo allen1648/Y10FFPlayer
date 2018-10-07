@@ -38,10 +38,7 @@ void Y10FFmpeg::decodeFFmpegThread() {
     //注册
     av_register_all();
     avformat_network_init();
-    LOGI("onCallload false jni");
-    mCallJava->onCallLoad(CHILD_THREAD, false);
     //申请内存
-//    LOGI("1");
     mAVFormatContext = avformat_alloc_context();
     //这个回调是为了防止无限等待,比如打开网络url
     mAVFormatContext->interrupt_callback.callback = avformatCallback;
@@ -58,14 +55,14 @@ void Y10FFmpeg::decodeFFmpegThread() {
         LOGE("invalid url! :%s", mUrl);
         pthread_mutex_unlock(&mInitMutex);
         mDecodeExit = true;
+        mCallJava->onCallError(CHILD_THREAD, 1001, "open input failed");
         return;
     }
     //找音频流
-//    LOGI("3");
     if (avformat_find_stream_info(mAVFormatContext, NULL) < 0) {
-        LOGE("can't find stream");
         pthread_mutex_unlock(&mInitMutex);
         mDecodeExit = true;
+        mCallJava->onCallError(CHILD_THREAD, 1002, "can't find stream");
         return;
     }
     int streamsCount = mAVFormatContext->nb_streams;
@@ -83,37 +80,34 @@ void Y10FFmpeg::decodeFFmpegThread() {
         }
     }
     //找解码器
-//    LOGI("4");
     AVCodec *codec = avcodec_find_decoder(mAudio->mCodecpar->codec_id);
     if (!codec) {
-        LOGE("can't find codec");
         pthread_mutex_unlock(&mInitMutex);
         mDecodeExit = true;
+        mCallJava->onCallError(CHILD_THREAD, 1003, "can't find codec");
         return;
     }
     //获取解码器上下文
-//    LOGI("5");
     mAudio->mAVCodecContext = avcodec_alloc_context3(codec);
     if (!mAudio->mAVCodecContext) {
-        LOGE("can't alloc new decode context");
         pthread_mutex_unlock(&mInitMutex);
         mDecodeExit = true;
+        mCallJava->onCallError(CHILD_THREAD, 1004, "can't alloc new decode context");
         return;
     }
     //把解码器信息复制到刚申请的解码器上下文内存中
-//    LOGI("6");
     if (avcodec_parameters_to_context(mAudio->mAVCodecContext, mAudio->mCodecpar)) {
-        LOGE("can't fill decode context");
         pthread_mutex_unlock(&mInitMutex);
         mDecodeExit = true;
+        mCallJava->onCallError(CHILD_THREAD, 1005, "can't fill decode context");
         return;
     }
     //用解码器打开流
-//    LOGI("7");
     if (avcodec_open2(mAudio->mAVCodecContext, codec, 0) != 0) {
         LOGE("can't open audio stream");
         pthread_mutex_unlock(&mInitMutex);
         mDecodeExit = true;
+        mCallJava->onCallError(CHILD_THREAD, 1006, "can't open audio stream");
         return;
     }
 

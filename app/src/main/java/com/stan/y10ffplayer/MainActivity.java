@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.stan.ff10player.FF10Player;
+import com.stan.ff10player.listener.OnErrorListener;
 import com.stan.ff10player.listener.OnLoadListener;
 import com.stan.ff10player.listener.OnPreparedListener;
 import com.stan.ff10player.listener.OnResumePauseListener;
@@ -19,7 +20,12 @@ import com.stan.y10ffplayer.Utils.PermissionUtil;
 import com.stan.y10ffplayer.Utils.TimeUtil;
 
 public class MainActivity extends Activity {
-
+    private static final int OPEN_INPUT_FAILED = 1001;
+    private static final int FIND_STREAM_FAILED = 1002;
+    private static final int FIND_CODEC_FAILED = 1003;
+    private static final int MALLOC_FAILED = 1004;
+    private static final int FILL_DECODER_FAILED = 1005;
+    private static final int OPEN_STREAM_FAILED = 1006;
     private static final int SET_PROGRESS = 1;
     private FF10Player mPlayer = new FF10Player();
     private TextView mProgressTV;
@@ -68,6 +74,7 @@ public class MainActivity extends Activity {
 
             }
         });
+
         mPlayer.setOnResumePauseListener(new OnResumePauseListener() {
             @Override
             public void onResumePauseChanged(boolean pause) {
@@ -96,12 +103,19 @@ public class MainActivity extends Activity {
                 }
             }
         });
+
+        mPlayer.setOnErrorListener(new OnErrorListener() {
+            @Override
+            public void onError(int code, String msg) {
+                LogUtil.i("yyl", "onError code:" + code + " msg:" + msg);
+            }
+        });
     }
 
     public void prepare(View view) {
 //        mPlayer.setDataSourceAndPrepare("http://cmp3.o2ting.com:8081/mp3_32k/100374/873790/bazc001.mp3?ver=TYYDYSB_A1.5.4.2&pno=0000&userName=&audio=1188555&md5=wnVgHti5zygNGNpdnxFZUA&expires=1539941128");
 //        mPlayer.setDataSourceAndPrepare("/sdcard/input.mp3");
-        mPlayer.setDataSourceAndPrepare("/sdcard/zly.mp3");
+//        mPlayer.setDataSourceAndPrepare("/sdcard/zly.mp3");
     }
 
     public void resume(View view) {
