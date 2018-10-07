@@ -1,7 +1,5 @@
 package com.stan.ff10player;
 
-import android.util.Log;
-
 import com.stan.ff10player.listener.OnLoadListener;
 import com.stan.ff10player.listener.OnPreparedListener;
 import com.stan.ff10player.listener.OnResumePauseListener;
@@ -75,6 +73,15 @@ public class FF10Player {
         }
     }
 
+    public void stop() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                nStop();
+            }
+        }).start();
+    }
+
     /* called from jni */
     private void onCallPrepared() {
         if (mOnPrepareListener != null) {
@@ -91,7 +98,7 @@ public class FF10Player {
 
     /* called from jni */
     private void onCallTimeChanged(int currentTime, int totalTime) {
-        Log.i("yyl", "onCallTimeChanged..."+currentTime+" "+totalTime);
+//        Log.i("yyl", "onCallTimeChanged..."+currentTime+" "+totalTime);
         if (mOnTimeChangedListener != null) {
             mOnTimeChangedListener.onTimeChanged(currentTime, totalTime);
         }
@@ -104,4 +111,6 @@ public class FF10Player {
     private native int nResume();
 
     private native int nPause();
+
+    private native int nStop();
 }

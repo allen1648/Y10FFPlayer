@@ -1,5 +1,3 @@
-
-#include <unistd.h>
 #include "Y10FFmpeg.h"
 
 void *decodeFFmpeg(void *data) {
@@ -9,41 +7,24 @@ void *decodeFFmpeg(void *data) {
     pthread_exit(&ffmpeg->mDecodeThread);
 }
 
-//void *readPacket(void *data) {
-//    LOGI("ffmpeg readPacket");
-//    Y10FFmpeg *ffmpeg = (Y10FFmpeg *) data;
-//    int count = 0;
-//    while (ffmpeg->mPlayStatus != NULL && !ffmpeg->mPlayStatus->mExit) {
-//        AVPacket *avPacket = av_packet_alloc();
-//        if (av_read_frame(ffmpeg->mAVFormatContext, avPacket) == 0) {
-//            if (avPacket->stream_index == ffmpeg->mAudio->mStreamIndex) {//如果是音频流
-//                //解码操作
-//                count++;
-//                LOGE("解码第 %d 帧", count);
-//                av_packet_free(&avPacket);
-//                av_free(avPacket);
-//                ffmpeg->mAudio->mY10Queue->putAVPacket(avPacket);
-//            } else {
-//                av_packet_free(&avPacket);
-//                av_free(avPacket);
-//            }
-//        } else {
-//            LOGE("decode finished");
-//            av_packet_free(&avPacket);
-//            av_free(avPacket);
-//            break;
-//        }
-//    }
-//    if (LOG_DEBUG) {
-//        LOGD("解码完成");
-//    }
-//    pthread_exit(&ffmpeg->mReadPacketThread);
-//}
+int avformatCallback(void *data) {
+    LOGI("avformatCallback");
+    Y10FFmpeg *ffmpeg = (Y10FFmpeg *)(data);
+    if(ffmpeg->mDecodeExit) {
+        return AVERROR_EOF;
+    }
+    return 0;
+}
 
 Y10FFmpeg::Y10FFmpeg(PlayStatus *playStatus, CallJava *callJava, const char *url) {
     this->mPlayStatus = playStatus;
     this->mCallJava = callJava;
     this->mUrl = url;
+    pthread_mutex_init(&mInitMutex, NULL);
+}
+
+Y10FFmpeg::~Y10FFmpeg() {
+    pthread_mutex_destroy(&mInitMutex);
 }
 
 void Y10FFmpeg::prepare() {
@@ -53,27 +34,38 @@ void Y10FFmpeg::prepare() {
 
 void Y10FFmpeg::decodeFFmpegThread() {
     LOGI("ffmpeg decodeFFmpegThread");
+    pthread_mutex_lock(&mInitMutex);
     //注册
     av_register_all();
     avformat_network_init();
+    LOGI("onCallload false jni");
+    mCallJava->onCallLoad(CHILD_THREAD, false);
     //申请内存
 //    LOGI("1");
     mAVFormatContext = avformat_alloc_context();
+    //这个回调是为了防止无限等待,比如打开网络url
+    mAVFormatContext->interrupt_callback.callback = avformatCallback;
+    mAVFormatContext->interrupt_callback.opaque = this;
     if (!mAVFormatContext) {
         LOGE("alloc formatcontext failed!");
+        pthread_mutex_unlock(&mInitMutex);
+        mDecodeExit = true;
         return;
     }
     //打开url
     LOGI("2 url:%s", mUrl);
     if (avformat_open_input(&mAVFormatContext, mUrl, NULL, NULL) != 0) {
-//    if (avio_open(&mAVFormatContext, mUrl, NULL, NULL) != 0) {
         LOGE("invalid url! :%s", mUrl);
+        pthread_mutex_unlock(&mInitMutex);
+        mDecodeExit = true;
         return;
     }
     //找音频流
 //    LOGI("3");
     if (avformat_find_stream_info(mAVFormatContext, NULL) < 0) {
         LOGE("can't find stream");
+        pthread_mutex_unlock(&mInitMutex);
+        mDecodeExit = true;
         return;
     }
     int streamsCount = mAVFormatContext->nb_streams;
@@ -95,6 +87,8 @@ void Y10FFmpeg::decodeFFmpegThread() {
     AVCodec *codec = avcodec_find_decoder(mAudio->mCodecpar->codec_id);
     if (!codec) {
         LOGE("can't find codec");
+        pthread_mutex_unlock(&mInitMutex);
+        mDecodeExit = true;
         return;
     }
     //获取解码器上下文
@@ -102,21 +96,36 @@ void Y10FFmpeg::decodeFFmpegThread() {
     mAudio->mAVCodecContext = avcodec_alloc_context3(codec);
     if (!mAudio->mAVCodecContext) {
         LOGE("can't alloc new decode context");
+        pthread_mutex_unlock(&mInitMutex);
+        mDecodeExit = true;
         return;
     }
     //把解码器信息复制到刚申请的解码器上下文内存中
 //    LOGI("6");
     if (avcodec_parameters_to_context(mAudio->mAVCodecContext, mAudio->mCodecpar)) {
         LOGE("can't fill decode context");
+        pthread_mutex_unlock(&mInitMutex);
+        mDecodeExit = true;
         return;
     }
     //用解码器打开流
 //    LOGI("7");
     if (avcodec_open2(mAudio->mAVCodecContext, codec, 0) != 0) {
         LOGE("can't open audio stream");
+        pthread_mutex_unlock(&mInitMutex);
+        mDecodeExit = true;
         return;
     }
-    mCallJava->onCallPrepared(CHILD_THREAD);
+
+    if(mCallJava != NULL) {
+        if(mPlayStatus != NULL && !mPlayStatus->mExit) {
+            mCallJava->onCallPrepared(CHILD_THREAD);
+        } else {
+            mDecodeExit = true;
+        }
+    }
+
+    pthread_mutex_unlock(&mInitMutex);
 }
 
 void Y10FFmpeg::start() {
@@ -125,7 +134,6 @@ void Y10FFmpeg::start() {
         return;
     }
     mAudio->start();
-//    pthread_create(&mReadPacketThread, NULL, readPacket, this);
     int count = 0;
     while (mPlayStatus != NULL && !mPlayStatus->mExit) {
         AVPacket *avPacket = av_packet_alloc();
@@ -155,6 +163,7 @@ void Y10FFmpeg::start() {
             }
         }
     }
+    mDecodeExit = true;
     if (LOG_DEBUG) {
         LOGD("解码完成");
     }
@@ -172,4 +181,53 @@ void Y10FFmpeg::pause() {
         LOGI("ffmpeg pause");
         mAudio->pause();
     }
+}
+
+void Y10FFmpeg::release() {
+    if(LOG_DEBUG) {
+        LOGI("release ffmpeg");
+    }
+
+    if(mPlayStatus->mExit) {
+        return;
+    }
+
+    mPlayStatus->mExit = true;
+    pthread_mutex_lock(&mInitMutex);
+
+    //防止无限等待的处理
+    int sleepCount = 0;
+    while (!mDecodeExit) {
+        if(sleepCount > 1000) {
+            mDecodeExit = true;
+        }
+
+        if(LOG_DEBUG) {
+            LOGE("wait ffmpeg exit %d", sleepCount);
+        }
+        sleepCount++;
+        av_usleep(1000 * 10);//暂停10毫秒
+    }
+
+    if(mAudio != NULL) {
+        mAudio->release();
+        delete(mAudio);
+        mAudio = NULL;
+    }
+
+    if(mAVFormatContext != NULL) {
+        avformat_close_input(&mAVFormatContext);
+        avformat_free_context(mAVFormatContext);
+        mAVFormatContext = NULL;
+    }
+
+    if(mCallJava != NULL) {
+        mCallJava = NULL;
+    }
+
+    if(mPlayStatus != NULL) {
+        mPlayStatus = NULL;
+    }
+
+    pthread_mutex_unlock(&mInitMutex);
 }

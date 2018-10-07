@@ -15,7 +15,6 @@ Y10FFmpeg *ffmpeg = NULL;
 CallJava *callJava = NULL;
 JavaVM *javaVM = NULL;
 PlayStatus *playStatus = NULL;
-jobject javaPlayerObj = NULL;
 
 extern "C"
 JNIEXPORT jint JNICALL
@@ -68,6 +67,25 @@ JNIEXPORT jint JNICALL
 Java_com_stan_ff10player_FF10Player_nPause(JNIEnv *env, jobject instance) {
     if(ffmpeg != NULL) {
         ffmpeg->pause();
+    }
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_stan_ff10player_FF10Player_nStop(JNIEnv *env, jobject instance) {
+    if (ffmpeg != NULL) {
+        ffmpeg->release();
+        delete (ffmpeg);
+        ffmpeg = NULL;
+        if (callJava != NULL) {
+            delete (callJava);
+            callJava = NULL;
+        }
+        if (playStatus != NULL) {
+            delete (playStatus);
+            playStatus = NULL;
+        }
     }
     return 0;
 }

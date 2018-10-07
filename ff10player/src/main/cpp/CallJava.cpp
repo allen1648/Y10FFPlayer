@@ -20,6 +20,11 @@ CallJava::CallJava(_JavaVM *javaVM, JNIEnv *env, jobject *obj) {
     mJmethodPrepared = env->GetMethodID(jclz, "onCallPrepared", "()V");
     mJmethodLoad = env->GetMethodID(jclz, "onCallLoaded", "(Z)V");
     mJmethodTimeChanged = env->GetMethodID(jclz, "onCallTimeChanged", "(II)V");
+//    mJmethodError = env->GetMethodID(jclz, "onCallError", "(ILjava/lang/String;)V");
+
+}
+
+CallJava::~CallJava() {
 
 }
 

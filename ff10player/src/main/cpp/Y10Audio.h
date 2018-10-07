@@ -55,6 +55,7 @@ public:
     void start();
     void resume();
     void pause();
+    void release();
     int resampleAudio();
     SLuint32 getCurrentSampleRateForOpensles(int sample_rate);
 

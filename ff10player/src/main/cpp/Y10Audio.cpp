@@ -14,7 +14,7 @@ Y10Audio::~Y10Audio() {
 }
 
 int Y10Audio::resampleAudio() {
-    LOGI("resample");
+//    LOGI("resample");
     while (mPlayStatus != NULL && !mPlayStatus->mExit) {
         if (mY10Queue->getQueueSize() == 0) {//加载中
             if (!mPlayStatus->mLoad) {
@@ -91,7 +91,7 @@ int Y10Audio::resampleAudio() {
             //输出声道
             int out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
             mDataSize = nb * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
-            LOGE("data_size is %d nb=%d", mDataSize, nb);
+//            LOGE("data_size is %d nb=%d", mDataSize, nb);
 //            fwrite(&mResampleBuffer,1,mDataSize,outfile);
 
             //计算时间
@@ -129,7 +129,7 @@ int Y10Audio::resampleAudio() {
 }
 
 void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
-    LOGI("pcmBufferCallBack");
+//    LOGI("pcmBufferCallBack");
     Y10Audio *audio = (Y10Audio *) context;
     if (audio != NULL) {
         int bufferSize = audio->resampleAudio();
@@ -226,6 +226,56 @@ void Y10Audio::pause() {
     if (pcmPlayerImpl != NULL) {
         (*pcmPlayerImpl)->SetPlayState(pcmPlayerImpl, SL_PLAYSTATE_PAUSED);
     }
+}
+
+void Y10Audio::release() {
+    if(pcmPlayerImpl != NULL) {
+        (*pcmPlayerImpl)->SetPlayState(pcmPlayerImpl,  SL_PLAYSTATE_STOPPED);
+    }
+
+    if (mY10Queue != NULL) {
+        delete (mY10Queue);
+        mY10Queue = NULL;
+    }
+
+    if (pcmPlayerObject != NULL) {
+        (*pcmPlayerObject)->Destroy(pcmPlayerObject);
+        pcmPlayerObject = NULL;
+        pcmPlayerImpl = NULL;
+        pcmBufferQueue = NULL;
+    }
+
+    if (outputMixObject != NULL) {
+        (*outputMixObject)->Destroy(outputMixObject);
+        outputMixObject = NULL;
+        outputMixEnvironmentalReverb = NULL;
+    }
+
+    if (engineObject != NULL) {
+        (*engineObject)->Destroy(engineObject);
+        engineObject = NULL;
+        engineEngine = NULL;
+    }
+
+    if (mResampleBuffer != NULL) {
+        free(mResampleBuffer);
+        mResampleBuffer = NULL;
+    }
+
+    if (mAVCodecContext != NULL) {
+        avcodec_close(mAVCodecContext);
+        avcodec_free_context(&mAVCodecContext);
+        mAVCodecContext = NULL;
+    }
+
+    if (mPlayStatus != NULL) {
+        mPlayStatus = NULL;
+    }
+
+    if (mCallJava != NULL) {
+        mCallJava = NULL;
+    }
+
 }
 
 SLuint32 Y10Audio::getCurrentSampleRateForOpensles(int sample_rate) {

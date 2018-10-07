@@ -9,13 +9,15 @@ Y10Queue::Y10Queue(PlayStatus *playStatus) {
 }
 
 Y10Queue::~Y10Queue() {
-
+    releaseQueue();
+    pthread_mutex_destroy(&mThreadMutex);
+    pthread_cond_destroy(&mThreadCond);
 }
 
 int Y10Queue::putAVPacket(AVPacket *packet) {
     pthread_mutex_lock(&mThreadMutex);
     mPacketQueue.push(packet);
-    LOGE("after push size:%d",mPacketQueue.size());
+//    LOGE("after push size:%d",mPacketQueue.size());
     pthread_cond_signal(&mThreadCond);
     pthread_mutex_unlock(&mThreadMutex);
     return 0;
@@ -31,7 +33,7 @@ int Y10Queue::getAVPacket(AVPacket *packet) {
             if (av_packet_ref(packet, front) == 0) {//把得到的AVPacket引用附给packet
 //                LOGI("before get pop");
                 mPacketQueue.pop();
-                LOGI("after get pop size:%d", mPacketQueue.size());
+//                LOGI("after get pop size:%d", mPacketQueue.size());
             }
             av_packet_free(&front);//先把pkt中的内容清空，然后再把指针清空，让pkt彻底无法使用了，如果需要重新使用，需要重新分配内存
             av_free(front);//释放指针所指的那块内存
@@ -43,7 +45,7 @@ int Y10Queue::getAVPacket(AVPacket *packet) {
             }
 //            LOGI("before get wait");
             pthread_cond_wait(&mThreadCond, &mThreadMutex);
-            LOGI("after get wait");
+//            LOGI("after get wait");
         }
     }
 //    LOGI("before get unlock");
@@ -58,4 +60,17 @@ int Y10Queue::getQueueSize() {
     size = mPacketQueue.size();
     pthread_mutex_unlock(&mThreadMutex);
     return size;
+}
+
+void Y10Queue::releaseQueue(){
+    pthread_cond_signal(&mThreadCond);
+    pthread_mutex_unlock(&mThreadMutex);
+    while (!mPacketQueue.empty()) {
+        AVPacket *packet = mPacketQueue.front();
+        mPacketQueue.pop();
+        av_packet_free(&packet);
+        av_free(packet);
+        packet = NULL;
+    }
+    pthread_mutex_unlock(&mThreadMutex);
 }

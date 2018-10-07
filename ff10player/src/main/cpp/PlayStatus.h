@@ -4,11 +4,12 @@
 
 class PlayStatus {
 public:
-    bool mExit;
+    bool mExit;//是否停止从
     bool mLoad = true;
 
 public:
     PlayStatus();
+    ~PlayStatus();
 };
 
 

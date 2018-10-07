@@ -111,4 +111,8 @@ public class MainActivity extends Activity {
     public void pause(View view) {
         mPlayer.pause();
     }
+
+    public void stop(View view) {
+        mPlayer.stop();
+    }
 }

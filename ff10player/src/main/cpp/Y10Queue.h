@@ -24,6 +24,7 @@ public:
     ~Y10Queue();
     int putAVPacket(AVPacket *packet);
     int getAVPacket(AVPacket *packet);
+    void releaseQueue();
     int getQueueSize();
 };
 

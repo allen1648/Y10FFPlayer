@@ -3,3 +3,7 @@
 PlayStatus::PlayStatus() {
     mExit = false;
 }
+
+PlayStatus::~PlayStatus() {
+
+}

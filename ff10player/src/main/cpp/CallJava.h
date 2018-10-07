@@ -23,6 +23,7 @@ public:
     jmethodID mJmethodPrepared;
     jmethodID mJmethodLoad;
     jmethodID mJmethodTimeChanged;
+    jmethodID mJmethodError;
 
 public:
     CallJava(JavaVM *javaVM, JNIEnv *env, jobject *obj);
