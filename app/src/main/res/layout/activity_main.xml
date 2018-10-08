@@ -7,41 +7,67 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <Button
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="prepare"
-        android:text="prepare" />
+        android:orientation="horizontal">
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="resume"
-        android:text="resume" />
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="pause"
-        android:text="pause" />
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="prepare"
+            android:text="prepare" />
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="stop"
-        android:text="stop" />
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="resume"
+            android:text="resume" />
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="seek"
-        android:text="seek" />
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="pause"
+            android:text="pause" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="stop"
+            android:text="stop" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="tobeadd" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tv_progress"
-        android:text="111111"
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="progress" />
+
+    <SeekBar
+        android:id="@+id/seek_bar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <TextView
+        android:id="@+id/tv_volume_sb"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="seekbar" />
 
+    <SeekBar
+        android:id="@+id/sb_volume"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </LinearLayout>

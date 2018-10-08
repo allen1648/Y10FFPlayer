@@ -25,6 +25,8 @@ public:
     jmethodID mJmethodTimeChanged;
     jmethodID mJmethodError;
     jmethodID mJmethodComplete;
+    jmethodID mJmethodStop;
+    jmethodID mJmethodNext;
 
 public:
     CallJava(JavaVM *javaVM, JNIEnv *env, jobject *obj);
@@ -36,6 +38,8 @@ public:
     void onCallTimeChanged(int type, int curr, int total);
     void onCallError(int type, int code,const char *msg);
     void onCallComplete(int type);
+    void onCallStop(int type);
+    void onCallNext(int type);
 };
 
 #endif //INC_10FFMPEGPLAYER_CALLJAVA_H

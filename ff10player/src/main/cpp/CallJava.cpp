@@ -113,3 +113,35 @@ void CallJava::onCallComplete(int type) {
         mJavaVM->DetachCurrentThread();
     }
 }
+
+void CallJava::onCallStop(int type) {
+    if (type == MAIN_THREAD) {
+        mJniEnv->CallVoidMethod(mJobj, mJmethodStop);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *jniEnv;
+        if (mJavaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK) {
+            if (LOG_DEBUG) {
+                LOGE("call onCallStop wrong");
+            }
+            return;
+        }
+        jniEnv->CallVoidMethod(mJobj, mJmethodStop);
+        mJavaVM->DetachCurrentThread();
+    }
+}
+
+void CallJava::onCallNext(int type) {
+    if (type == MAIN_THREAD) {
+        mJniEnv->CallVoidMethod(mJobj, mJmethodStop);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *jniEnv;
+        if (mJavaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK) {
+            if (LOG_DEBUG) {
+                LOGE("call onCallStop wrong");
+            }
+            return;
+        }
+        jniEnv->CallVoidMethod(mJobj, mJmethodStop);
+        mJavaVM->DetachCurrentThread();
+    }
+}

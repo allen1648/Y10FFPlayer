@@ -6,7 +6,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import android.view.View;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.stan.ff10player.FF10Player;
@@ -27,8 +29,12 @@ public class MainActivity extends Activity {
     private static final int FILL_DECODER_FAILED = 1005;
     private static final int OPEN_STREAM_FAILED = 1006;
     private static final int SET_PROGRESS = 1;
+    private int mPosition;
     private FF10Player mPlayer = new FF10Player();
     private TextView mProgressTV;
+    private TextView mVolumeTV;
+    private SeekBar mProgressBar;
+    private SeekBar mVolumeBar;
     private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
@@ -36,6 +42,7 @@ public class MainActivity extends Activity {
             switch (msg.what) {
                 case SET_PROGRESS:
                     mProgressTV.setText(TimeUtil.secondsToDateFormat(msg.arg1, false) + "/" + TimeUtil.secondsToDateFormat(msg.arg2, false));
+                    mProgressBar.setProgress(msg.arg1 * 100 / msg.arg2);
                     break;
             }
         }
@@ -60,6 +67,56 @@ public class MainActivity extends Activity {
 
     private void initView() {
         mProgressTV = findViewById(R.id.tv_progress);
+        mVolumeTV = findViewById(R.id.tv_volume_sb);
+        mProgressBar = findViewById(R.id.seek_bar);
+        mProgressBar.setMax(100);
+        mProgressBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (!fromUser) {
+                    return;
+                }
+                mPosition = mPlayer.getDuration() * progress / 100;
+                Log.i("yyl", "position:" + mPosition + " progress:" + progress);
+                mPlayer.seek(mPosition);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+
+        mVolumeBar = findViewById(R.id.sb_volume);
+        mVolumeBar.setMax(100);
+        mVolumeBar.setProgress(50);
+        mVolumeBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    if (mPlayer != null) {
+                        mPlayer.setVolume(progress);
+                    }
+                    mVolumeTV.setText("音量:" + progress + "%");
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
     }
 
     private void init() {
@@ -110,12 +167,13 @@ public class MainActivity extends Activity {
                 LogUtil.i("yyl", "onError code:" + code + " msg:" + msg);
             }
         });
+        mPlayer.setVolume(50);
     }
 
     public void prepare(View view) {
-//        mPlayer.setDataSourceAndPrepare("http://cmp3.o2ting.com:8081/mp3_32k/100374/873790/bazc001.mp3?ver=TYYDYSB_A1.5.4.2&pno=0000&userName=&audio=1188555&md5=wnVgHti5zygNGNpdnxFZUA&expires=1539941128");
+//        mPlayer.setDataSourceAndPrepare("http://cmp3.o2ting.c1om:8081/mp3_32k/100374/873790/bazc001.mp3?ver=TYYDYSB_A1.5.4.2&pno=0000&userName=&audio=1188555&md5=wnVgHti5zygNGNpdnxFZUA&expires=1539941128");
 //        mPlayer.setDataSourceAndPrepare("/sdcard/input.mp3");
-//        mPlayer.setDataSourceAndPrepare("/sdcard/zly.mp3");
+        mPlayer.setDataSourceAndPrepare("/sdcard/zly.mp3");
     }
 
     public void resume(View view) {

@@ -10,7 +10,7 @@ void *decodeFFmpeg(void *data) {
 int avformatCallback(void *data) {
     LOGI("avformatCallback");
     Y10FFmpeg *ffmpeg = (Y10FFmpeg *)(data);
-    if(ffmpeg->mDecodeExit) {
+    if(ffmpeg->mPrepareExit) {
         return AVERROR_EOF;
     }
     return 0;
@@ -48,7 +48,7 @@ void Y10FFmpeg::decodeFFmpegThread() {
     if (!mAVFormatContext) {
         LOGE("alloc formatcontext failed!");
         pthread_mutex_unlock(&mInitMutex);
-        mDecodeExit = true;
+        mPrepareExit = true;
         return;
     }
     //打开url
@@ -56,7 +56,7 @@ void Y10FFmpeg::decodeFFmpegThread() {
     if (avformat_open_input(&mAVFormatContext, mUrl, NULL, NULL) != 0) {
         LOGE("invalid url! :%s", mUrl);
         pthread_mutex_unlock(&mInitMutex);
-        mDecodeExit = true;
+        mPrepareExit = true;
         const char* cstr = "open input failed";
         mCallJava->onCallError(CHILD_THREAD, 1001, cstr);
         return;
@@ -64,7 +64,7 @@ void Y10FFmpeg::decodeFFmpegThread() {
     //找音频流
     if (avformat_find_stream_info(mAVFormatContext, NULL) < 0) {
         pthread_mutex_unlock(&mInitMutex);
-        mDecodeExit = true;
+        mPrepareExit = true;
         const char* cstr = "can't find stream";
         mCallJava->onCallError(CHILD_THREAD, 1002, cstr);
         return;
@@ -88,7 +88,7 @@ void Y10FFmpeg::decodeFFmpegThread() {
     AVCodec *codec = avcodec_find_decoder(mAudio->mCodecpar->codec_id);
     if (!codec) {
         pthread_mutex_unlock(&mInitMutex);
-        mDecodeExit = true;
+        mPrepareExit = true;
         const char* cstr = "can't find codec";
         mCallJava->onCallError(CHILD_THREAD, 1003, cstr);
         return;
@@ -97,7 +97,7 @@ void Y10FFmpeg::decodeFFmpegThread() {
     mAudio->mAVCodecContext = avcodec_alloc_context3(codec);
     if (!mAudio->mAVCodecContext) {
         pthread_mutex_unlock(&mInitMutex);
-        mDecodeExit = true;
+        mPrepareExit = true;
         const char* cstr = "can't alloc new decode context";
         mCallJava->onCallError(CHILD_THREAD, 1004, cstr);
         return;
@@ -105,7 +105,7 @@ void Y10FFmpeg::decodeFFmpegThread() {
     //把解码器信息复制到刚申请的解码器上下文内存中
     if (avcodec_parameters_to_context(mAudio->mAVCodecContext, mAudio->mCodecpar)) {
         pthread_mutex_unlock(&mInitMutex);
-        mDecodeExit = true;
+        mPrepareExit = true;
         const char* cstr = "can't fill decode context";
         mCallJava->onCallError(CHILD_THREAD, 1005, cstr);
         return;
@@ -114,7 +114,7 @@ void Y10FFmpeg::decodeFFmpegThread() {
     if (avcodec_open2(mAudio->mAVCodecContext, codec, 0) != 0) {
         LOGE("can't open audio stream");
         pthread_mutex_unlock(&mInitMutex);
-        mDecodeExit = true;
+        mPrepareExit = true;
         const char* cstr = "can't open audio stream";
         mCallJava->onCallError(CHILD_THREAD, 1006, cstr);
         return;
@@ -124,7 +124,7 @@ void Y10FFmpeg::decodeFFmpegThread() {
         if(mPlayStatus != NULL && !mPlayStatus->mExit) {
             mCallJava->onCallPrepared(CHILD_THREAD);
         } else {
-            mDecodeExit = true;
+            mPrepareExit = true;
         }
     }
 
@@ -142,7 +142,7 @@ void Y10FFmpeg::start() {
         if(mPlayStatus->mSeeking) {
             continue;
         }
-        if(mAudio->mY10Queue->getQueueSize() > 40) {
+        if(mAudio->mY10Queue->getQueueSize() > 40) {//不要一下子解码完毕
             continue;
         }
         AVPacket *avPacket = av_packet_alloc();
@@ -168,7 +168,7 @@ void Y10FFmpeg::start() {
             av_free(avPacket);
             avPacket = NULL;
             while (mPlayStatus != NULL && !mPlayStatus->mExit) {//缓存还有数据要播放
-                if (mAudio->mY10Queue->getQueueSize() > 0) {
+                if (mAudio->mY10Queue->getQueueSize() > 0) {//用来判断是否播放完毕,播放完毕就判定结束
                     continue;
                 } else {
                     mPlayStatus->mExit = true;
@@ -177,7 +177,7 @@ void Y10FFmpeg::start() {
             }
         }
     }
-    mDecodeExit = true;
+    mPrepareExit = true;
     mCallJava->onCallComplete(CHILD_THREAD);
     if (LOG_DEBUG) {
         LOGD("解码完成");
@@ -226,16 +226,16 @@ void Y10FFmpeg::release() {
 
     //防止无限等待的处理
     int sleepCount = 0;
-    while (!mDecodeExit) {
+    while (!mPrepareExit) {
         if(sleepCount > 1000) {
-            mDecodeExit = true;
+            mPrepareExit = true;
         }
 
         if(LOG_DEBUG) {
             LOGE("wait ffmpeg exit %d", sleepCount);
         }
         sleepCount++;
-        av_usleep(1000 * 10);//暂停10毫秒
+        av_usleep(1000 * 10);//暂停10毫秒,总共是10秒
     }
 
     if(mAudio != NULL) {
@@ -259,4 +259,37 @@ void Y10FFmpeg::release() {
     }
 
     pthread_mutex_unlock(&mInitMutex);
+}
+
+void Y10FFmpeg::forceStop() {
+    mPlayStatus->mExit = true;
+    mPrepareExit = true;
+    pthread_mutex_lock(&mInitMutex);
+    if(mAudio != NULL) {
+        mAudio->release();
+        delete(mAudio);
+        mAudio = NULL;
+    }
+
+    if(mAVFormatContext != NULL) {
+        avformat_close_input(&mAVFormatContext);
+        avformat_free_context(mAVFormatContext);
+        mAVFormatContext = NULL;
+    }
+
+    if(mCallJava != NULL) {
+        mCallJava = NULL;
+    }
+
+    if(mPlayStatus != NULL) {
+        mPlayStatus = NULL;
+    }
+    pthread_mutex_unlock(&mInitMutex);
+
+}
+
+void Y10FFmpeg::setVolume(int value) {
+    if(mAudio != NULL) {
+        mAudio->setVolume(value);
+    }
 }

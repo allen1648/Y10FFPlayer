@@ -135,7 +135,7 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
         int bufferSize = audio->resampleAudio();
         if (bufferSize > 0) {
             //播放时间
-            audio->mClockTime += bufferSize / ((double)(audio->mSampleRate * 2 * 2));
+            audio->mClockTime += bufferSize / ((double)(audio->mSampleRate * 2 * 2));//采样个数除以一秒的采样个数就是相应的时间
             if(audio->mClockTime - audio->mLastTime >= 0.1) {//每隔100ms
                 audio->mLastTime = audio->mClockTime;
                 //回调应用层
@@ -183,16 +183,20 @@ void Y10Audio::initOpenSLES() {
     };
     SLDataSource slDataSource = {&android_queue, &pcm};
 
-    const SLInterfaceID ids[1] = {SL_IID_BUFFERQUEUE};
-    const SLboolean req[1] = {SL_BOOLEAN_TRUE};
+    const SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
+    const SLboolean req[2] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
-    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 1, ids, req);
+    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 2, ids, req);
 
     //初始化播放器
     (*pcmPlayerObject)->Realize(pcmPlayerObject, SL_BOOLEAN_FALSE);
 
     //得到接口后调用  获取Player接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_PLAY, &pcmPlayerImpl);
+
+    //初始化音量接口
+    (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_VOLUME, &pcmVolumeImpl);
+    setVolume(mVolumePercent);
 
     //注册回调缓冲区 获取缓冲队列接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_BUFFERQUEUE, &pcmBufferQueue);
@@ -277,6 +281,31 @@ void Y10Audio::release() {
         mCallJava = NULL;
     }
 
+}
+
+void Y10Audio::setVolume(int percent) {
+    mVolumePercent = percent;
+    if (pcmVolumeImpl != NULL) {
+        if (percent > 30) {
+            (*pcmVolumeImpl)->SetVolumeLevel(pcmVolumeImpl, (100 - percent) * -20);
+        } else if (percent > 25) {
+            (*pcmVolumeImpl)->SetVolumeLevel(pcmVolumeImpl, (100 - percent) * -22);
+        } else if (percent > 20) {
+            (*pcmVolumeImpl)->SetVolumeLevel(pcmVolumeImpl, (100 - percent) * -25);
+        } else if (percent > 15) {
+            (*pcmVolumeImpl)->SetVolumeLevel(pcmVolumeImpl, (100 - percent) * -28);
+        } else if (percent > 10) {
+            (*pcmVolumeImpl)->SetVolumeLevel(pcmVolumeImpl, (100 - percent) * -30);
+        } else if (percent > 5) {
+            (*pcmVolumeImpl)->SetVolumeLevel(pcmVolumeImpl, (100 - percent) * -34);
+        } else if (percent > 3) {
+            (*pcmVolumeImpl)->SetVolumeLevel(pcmVolumeImpl, (100 - percent) * -37);
+        } else if (percent > 0) {
+            (*pcmVolumeImpl)->SetVolumeLevel(pcmVolumeImpl, (100 - percent) * -40);
+        } else {
+            (*pcmVolumeImpl)->SetVolumeLevel(pcmVolumeImpl, (100 - percent) * -100);
+        }
+    }
 }
 
 SLuint32 Y10Audio::getCurrentSampleRateForOpensles(int sample_rate) {

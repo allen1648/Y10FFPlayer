@@ -29,6 +29,13 @@ public class FF10Player {
     private String mSourceUrl;
     private int mDuration;
 
+    /* 音量值0~100 */
+    private int mVolume;
+
+    public int getDuration() {
+        return mDuration;
+    }
+
     public void setOnPrepareListener(OnPreparedListener listener) {
         this.mOnPrepareListener = listener;
     }
@@ -51,7 +58,12 @@ public class FF10Player {
 
     public void setDataSourceAndPrepare(String url) {
         mSourceUrl = url;
+        release();
         prepare();
+    }
+
+    private void release() {
+        nRelease();
     }
 
     private void prepare() {
@@ -82,20 +94,20 @@ public class FF10Player {
     }
 
     public void stop() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                nStop();
-            }
-        }).start();
+        nStop();
     }
 
     public void seek(int secs) {
         nSeek(secs);
     }
 
+    public void setVolume(int percent) {
+        nSetVolume(percent);
+    }
+
     /* called from jni */
     private void onCallPrepared() {
+        mDuration = nGetDuration();
         if (mOnPrepareListener != null) {
             mOnPrepareListener.onSuccess();
         }
@@ -139,4 +151,11 @@ public class FF10Player {
     private native int nStop();
 
     private native int nSeek(int secs);
+
+    private native int nRelease();
+
+    private native int nGetDuration();
+
+    private native int nSetVolume(int percent);
+
 }

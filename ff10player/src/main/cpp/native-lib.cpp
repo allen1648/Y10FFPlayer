@@ -16,12 +16,46 @@ CallJava *callJava = NULL;
 JavaVM *javaVM = NULL;
 PlayStatus *playStatus = NULL;
 pthread_t startThread;
-bool nativeExited = false;//防止重复退出
+pthread_t stopThread;
+bool stopping = false;//防止重复退出,点击两次stop会生成两个线程,所以要判断下
 
 void *startThreadCallback(void *data) {
     Y10FFmpeg *fFmpeg = (Y10FFmpeg *)data;
     fFmpeg->start();
     pthread_exit(&startThread);
+}
+
+void *stopThreadCallback(void *data) {
+    if(stopping) {
+        return NULL;
+    }
+    stopping = true;
+    if (ffmpeg != NULL) {
+        ffmpeg->release();
+        delete (ffmpeg);
+        ffmpeg = NULL;
+        if (callJava != NULL) {
+            delete (callJava);
+            callJava = NULL;
+        }
+        if (playStatus != NULL) {
+            delete (playStatus);
+            playStatus = NULL;
+        }
+    }
+    stopping = false;
+    pthread_exit(&startThread);
+}
+
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
+    jint result = -1;
+    javaVM = jvm;
+    JNIEnv *env;
+    if (jvm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) {
+        LOGE("onLoad failed");
+        return result;
+    }
+    return JNI_VERSION_1_6;
 }
 
 extern "C"
@@ -35,11 +69,13 @@ Java_com_stan_ff10player_FF10Player_nPrepare(JNIEnv *env, jobject instance, jstr
         callJava->onCallPrepared(MAIN_THREAD);
         playStatus = new PlayStatus();
         ffmpeg = new Y10FFmpeg(playStatus, callJava, url);
+    } else {
+        //已经在播放要先释放
+//        ffmpeg->release();
     }
     ffmpeg->prepare();
     return RESULT_SUCCESS;
 }
-
 
 extern "C"
 JNIEXPORT jint JNICALL
@@ -48,18 +84,6 @@ Java_com_stan_ff10player_FF10Player_nStart(JNIEnv *env, jobject instance) {
         pthread_create(&startThread, NULL, startThreadCallback, ffmpeg);
     }
     return 0;
-}
-
-
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
-    jint result = -1;
-    javaVM = jvm;
-    JNIEnv *env;
-    if (jvm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) {
-        LOGE("onLoad failed");
-        return result;
-    }
-    return JNI_VERSION_1_6;
 }
 
 extern "C"
@@ -83,24 +107,7 @@ Java_com_stan_ff10player_FF10Player_nPause(JNIEnv *env, jobject instance) {
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_stan_ff10player_FF10Player_nStop(JNIEnv *env, jobject instance) {
-    if(nativeExited) {
-        return 0;
-    }
-    nativeExited = true;
-    if (ffmpeg != NULL) {
-        ffmpeg->release();
-        delete (ffmpeg);
-        ffmpeg = NULL;
-        if (callJava != NULL) {
-            delete (callJava);
-            callJava = NULL;
-        }
-        if (playStatus != NULL) {
-            delete (playStatus);
-            playStatus = NULL;
-        }
-    }
-    nativeExited = false;
+    pthread_create(&stopThread, NULL, stopThreadCallback, NULL);
     return 0;
 }
 
@@ -109,6 +116,35 @@ JNIEXPORT jint JNICALL
 Java_com_stan_ff10player_FF10Player_nSeek(JNIEnv *env, jobject instance, jint secs) {
     if(ffmpeg != NULL) {
         ffmpeg->seek(secs);
+    }
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_stan_ff10player_FF10Player_nRelease(JNIEnv *env, jobject instance) {
+    if(ffmpeg != NULL) {
+        ffmpeg->forceStop();
+    }
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_stan_ff10player_FF10Player_nGetDuration(JNIEnv *env, jobject instance) {
+    // TODO
+    if(ffmpeg != NULL) {
+        return ffmpeg->mDuration;
+    }
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_stan_ff10player_FF10Player_nSetVolume(JNIEnv *env, jobject instance, jint value) {
+    // TODO
+    if(ffmpeg != NULL) {
+        ffmpeg->setVolume(value);
     }
     return 0;
 }

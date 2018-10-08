@@ -22,8 +22,9 @@ public:
     CallJava *mCallJava = NULL;
     PlayStatus *mPlayStatus = NULL;
     const char *mUrl = NULL;
-    bool mDecodeExit = false;
+    bool mPrepareExit = false;
     int mDuration = 0;
+    int mVolume = 0;
 public:
     Y10FFmpeg(PlayStatus *playStatus, CallJava *callJava, const char *url);
 
@@ -35,7 +36,9 @@ public:
     void resume();
     void pause();
     void release();
+    void forceStop();
     void seek(int64_t secs);
+    void setVolume(int value);
 };
 
 #endif //INC_10FFMPEGPLAYER_Y10FFMPEG_H
