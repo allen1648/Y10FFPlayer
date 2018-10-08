@@ -41,12 +41,6 @@
             android:onClick="stop"
             android:text="stop" />
 
-        <Button
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="tobeadd" />
-
     </LinearLayout>
 
     <TextView
@@ -70,4 +64,33 @@
         android:id="@+id/sb_volume"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="volumeLeft"
+            android:text="left" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="volumeRight"
+            android:text="right" />
+
+        <Button
+            android:id="@+id/v_center"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="volumeCenter"
+            android:text="stereo" />
+    </LinearLayout>
+
 </LinearLayout>

@@ -149,9 +149,9 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
 void Y10Audio::initOpenSLES() {
     LOGI("initOpenSL");
     SLresult result;
-    result = slCreateEngine(&engineObject, 0, 0, 0, 0, 0);
-    result = (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
-    result = (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
+    slCreateEngine(&engineObject, 0, 0, 0, 0, 0);
+    (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
+    (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
 
     //第二步，创建混音器
     const SLInterfaceID mids[1] = {SL_IID_ENVIRONMENTALREVERB};
@@ -183,10 +183,10 @@ void Y10Audio::initOpenSLES() {
     };
     SLDataSource slDataSource = {&android_queue, &pcm};
 
-    const SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
-    const SLboolean req[2] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    const SLInterfaceID ids[3] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME, SL_IID_MUTESOLO};
+    const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
-    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 2, ids, req);
+    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 3, ids, req);
 
     //初始化播放器
     (*pcmPlayerObject)->Realize(pcmPlayerObject, SL_BOOLEAN_FALSE);
@@ -197,6 +197,9 @@ void Y10Audio::initOpenSLES() {
     //初始化音量接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_VOLUME, &pcmVolumeImpl);
     setVolume(mVolumePercent);
+
+    //初始化声道接口
+    (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_MUTESOLO, &pcmMuteImpl);
 
     //注册回调缓冲区 获取缓冲队列接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_BUFFERQUEUE, &pcmBufferQueue);
@@ -354,4 +357,20 @@ SLuint32 Y10Audio::getCurrentSampleRateForOpensles(int sample_rate) {
             rate = SL_SAMPLINGRATE_44_1;
     }
     return rate;
+}
+
+void Y10Audio::setMute(int mute) {
+    LOGI("mute:%d",mute);
+    if (pcmMuteImpl != NULL) {
+        if (mute == 0) {//右
+            (*pcmMuteImpl)->SetChannelMute(pcmMuteImpl, 1, SL_BOOLEAN_FALSE);
+            (*pcmMuteImpl)->SetChannelMute(pcmMuteImpl, 0, SL_BOOLEAN_TRUE);
+        } else if (mute == 1) {//左
+            (*pcmMuteImpl)->SetChannelMute(pcmMuteImpl, 1, SL_BOOLEAN_TRUE);
+            (*pcmMuteImpl)->SetChannelMute(pcmMuteImpl, 0, SL_BOOLEAN_FALSE);
+        } else if (mute == 2) {//立体
+            (*pcmMuteImpl)->SetChannelMute(pcmMuteImpl, 1, SL_BOOLEAN_FALSE);
+            (*pcmMuteImpl)->SetChannelMute(pcmMuteImpl, 0, SL_BOOLEAN_FALSE);
+        }
+    }
 }

@@ -39,6 +39,7 @@ public:
     void forceStop();
     void seek(int64_t secs);
     void setVolume(int value);
+    void setMute(int mute);
 };
 
 #endif //INC_10FFMPEGPLAYER_Y10FFMPEG_H

@@ -45,6 +45,7 @@ public:
     SLObjectItf pcmPlayerObject = NULL;
     SLPlayItf pcmPlayerImpl = NULL;
     SLVolumeItf pcmVolumeImpl = NULL;
+    SLMuteSoloItf pcmMuteImpl = NULL;//声道
 
     //缓冲器队列接口
     SLAndroidSimpleBufferQueueItf pcmBufferQueue = NULL;
@@ -58,6 +59,7 @@ public:
     void pause();
     void release();
     void setVolume(int value);
+    void setMute(int mute);
     int resampleAudio();
     SLuint32 getCurrentSampleRateForOpensles(int sample_rate);
 };

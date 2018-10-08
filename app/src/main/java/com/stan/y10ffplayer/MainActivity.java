@@ -187,4 +187,16 @@ public class MainActivity extends Activity {
     public void stop(View view) {
         mPlayer.stop();
     }
+
+    public void volumeLeft(View view) {
+        mPlayer.setMute(FF10Player.MUTE_LEFT);
+    }
+
+    public void volumeCenter(View view) {
+        mPlayer.setMute(FF10Player.MUTE_STEREO);
+    }
+
+    public void volumeRight(View view) {
+        mPlayer.setMute(FF10Player.MUTE_RIGHT);
+    }
 }

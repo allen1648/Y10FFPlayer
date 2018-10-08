@@ -293,3 +293,9 @@ void Y10FFmpeg::setVolume(int value) {
         mAudio->setVolume(value);
     }
 }
+
+void Y10FFmpeg::setMute(int mute) {
+    if(mAudio != NULL) {
+        mAudio->setMute(mute);
+    }
+}

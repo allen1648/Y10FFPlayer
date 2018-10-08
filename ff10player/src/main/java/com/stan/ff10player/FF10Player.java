@@ -21,6 +21,9 @@ public class FF10Player {
         System.loadLibrary("swscale-4");
     }
 
+    public static final int MUTE_RIGHT = 0;
+    public static final int MUTE_LEFT = 1;
+    public static final int MUTE_STEREO = 2;
     private OnPreparedListener mOnPrepareListener;
     private OnResumePauseListener mOnResumePauseListener;
     private OnTimeChangedListener mOnTimeChangedListener;
@@ -105,6 +108,10 @@ public class FF10Player {
         nSetVolume(percent);
     }
 
+    public void setMute(int mute) {
+        nSetMute(mute);
+    }
+
     /* called from jni */
     private void onCallPrepared() {
         mDuration = nGetDuration();
@@ -158,4 +165,5 @@ public class FF10Player {
 
     private native int nSetVolume(int percent);
 
+    private native int nSetMute(int mute);
 }

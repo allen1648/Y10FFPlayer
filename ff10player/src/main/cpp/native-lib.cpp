@@ -132,7 +132,6 @@ Java_com_stan_ff10player_FF10Player_nRelease(JNIEnv *env, jobject instance) {
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_stan_ff10player_FF10Player_nGetDuration(JNIEnv *env, jobject instance) {
-    // TODO
     if(ffmpeg != NULL) {
         return ffmpeg->mDuration;
     }
@@ -142,9 +141,17 @@ Java_com_stan_ff10player_FF10Player_nGetDuration(JNIEnv *env, jobject instance) 
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_stan_ff10player_FF10Player_nSetVolume(JNIEnv *env, jobject instance, jint value) {
-    // TODO
     if(ffmpeg != NULL) {
         ffmpeg->setVolume(value);
+    }
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_stan_ff10player_FF10Player_nSetMute(JNIEnv *env, jobject instance, jint mute) {
+    if(ffmpeg != NULL) {
+        ffmpeg->setMute(mute);
     }
     return 0;
 }
