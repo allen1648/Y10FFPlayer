@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.4.1)
 set(CPPDIR ${CMAKE_SOURCE_DIR}/src/main/cpp)
+set(SOUNDTOUCH_CPPDIR ${CMAKE_SOURCE_DIR}/src/main/cpp/soundTouch)
 set(FFMPEG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/src/main/cpp/include/ffmpeg)
 set(FFMPEG_SO_DIR ${CMAKE_SOURCE_DIR}/src/main/jni/${ANDROID_ABI})
+set(SOUNDTOUCH_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/src/main/cpp/include/soundTouch)
 include_directories(${FFMPEG_INCLUDE_DIR})
+include_directories(${SOUNDTOUCH_INCLUDE_DIR})
 
 add_library( # Sets the name of the library.
         native-lib
@@ -13,6 +16,21 @@ add_library( # Sets the name of the library.
         ${CPPDIR}/Y10FFmpeg.cpp
         ${CPPDIR}/PlayStatus.cpp
         ${CPPDIR}/Y10Queue.cpp
+        # soundTouch
+        ${SOUNDTOUCH_CPPDIR}/AAFilter.cpp
+        ${SOUNDTOUCH_CPPDIR}/BPMDetect.cpp
+        ${SOUNDTOUCH_CPPDIR}/cpu_detect_x86.cpp
+        ${SOUNDTOUCH_CPPDIR}/FIFOSampleBuffer.cpp
+        ${SOUNDTOUCH_CPPDIR}/FIRFilter.cpp
+        ${SOUNDTOUCH_CPPDIR}/InterpolateCubic.cpp
+        ${SOUNDTOUCH_CPPDIR}/InterpolateLinear.cpp
+        ${SOUNDTOUCH_CPPDIR}/InterpolateShannon.cpp
+        ${SOUNDTOUCH_CPPDIR}/mmx_optimized.cpp
+        ${SOUNDTOUCH_CPPDIR}/PeakFinder.cpp
+        ${SOUNDTOUCH_CPPDIR}/RateTransposer.cpp
+        ${SOUNDTOUCH_CPPDIR}/SoundTouch.cpp
+        ${SOUNDTOUCH_CPPDIR}/sse_optimized.cpp
+        ${SOUNDTOUCH_CPPDIR}/TDStretch.cpp
         )
 
 add_library(avcodec-57 SHARED IMPORTED)

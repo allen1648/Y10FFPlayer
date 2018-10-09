@@ -112,6 +112,13 @@ public class FF10Player {
         nSetMute(mute);
     }
 
+    public void setSpeed(float speed) {
+        nSetSpeed(speed);
+    }
+    public void setPitch(float pitch) {
+        nSetPitch(pitch);
+    }
+
     /* called from jni */
     private void onCallPrepared() {
         mDuration = nGetDuration();
@@ -166,4 +173,8 @@ public class FF10Player {
     private native int nSetVolume(int percent);
 
     private native int nSetMute(int mute);
+
+    private native int nSetPitch(float pitch);
+
+    private native int nSetSpeed(float speed);
 }

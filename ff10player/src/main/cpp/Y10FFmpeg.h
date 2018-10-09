@@ -40,6 +40,8 @@ public:
     void seek(int64_t secs);
     void setVolume(int value);
     void setMute(int mute);
+    void setPitch(float pitch);
+    void setSpeed(float speed);
 };
 
 #endif //INC_10FFMPEGPLAYER_Y10FFMPEG_H

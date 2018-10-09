@@ -155,3 +155,21 @@ Java_com_stan_ff10player_FF10Player_nSetMute(JNIEnv *env, jobject instance, jint
     }
     return 0;
 }
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_stan_ff10player_FF10Player_nSetPitch(JNIEnv *env, jobject instance, jfloat pitch) {
+    if(ffmpeg != NULL) {
+        ffmpeg->setPitch(pitch);
+    }
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_stan_ff10player_FF10Player_nSetSpeed(JNIEnv *env, jobject instance, jfloat speed) {
+    if(ffmpeg != NULL) {
+        ffmpeg->setSpeed(speed);
+    }
+    return 0;
+}

@@ -3,13 +3,14 @@
 
 #include "Y10Queue.h"
 #include "CallJava.h"
+#include "SoundTouch.h"
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libswresample/swresample.h>
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 };
-#define OPENSL_FUNCTIONS 2
+using namespace soundtouch;
 class Y10Audio {
 public:
     int mStreamIndex = -1;
@@ -18,7 +19,11 @@ public:
     int mSampleRate = 0;
     int mDuration = 0;//单位秒
     int mVolumePercent = 100;
+    int mResampleNumber = 0;//重采样个数, swr_convert()返回
+    int mSoundTouchSampleNum = 0;
+    bool mReadSoundTouchBufferUnFinished = true;
     uint8_t *mResampleBuffer = NULL;//存储重采样的流
+    uint8_t *mOutBuffer = NULL;//
     AVCodecContext *mAVCodecContext = NULL;
     AVCodecParameters *mCodecpar = NULL;
     Y10Queue *mY10Queue = NULL;
@@ -31,6 +36,9 @@ public:
     double mClockTime;//总的播放时长
     double mNowTime = 0;//当前frame播放时间
     double mLastTime = 0; //上一次调用时间
+    float mPitch = 1.0f;//声调
+    float mSpeed = 1.0f;//播放速度
+
     //OpenSLES
     // 引擎接口
     SLObjectItf engineObject = NULL;
@@ -50,6 +58,10 @@ public:
     //缓冲器队列接口
     SLAndroidSimpleBufferQueueItf pcmBufferQueue = NULL;
 
+    //soundTouch
+    SoundTouch *mSoundTouch = NULL;
+    SAMPLETYPE *mSoundTouchBuffer = NULL;
+
 public:
     Y10Audio(PlayStatus *playStatus, int sampleRate, CallJava *callJava);
     ~Y10Audio();
@@ -60,7 +72,11 @@ public:
     void release();
     void setVolume(int value);
     void setMute(int mute);
-    int resampleAudio();
+    void setPitch(float pitch);
+    void setSpeed(float speed);
+    int resampleAudio(void **out);
+//    int resampleAudio();
+    int resampleWithSoundTouch();
     SLuint32 getCurrentSampleRateForOpensles(int sample_rate);
 };
 

@@ -4,17 +4,24 @@ FILE *outfile = fopen("/sdcard/outpcm.pcm", "w");
 
 Y10Audio::Y10Audio(PlayStatus *playStatus, int sampleRate, CallJava *callJava) {
     this->mPlayStatus = playStatus;
-    this->mSampleRate = sampleRate;
+    this->mSampleRate = sampleRate;//采样率一般44100
     this->mCallJava = callJava;
     mY10Queue = new Y10Queue(playStatus);
     mResampleBuffer = (uint8_t *) av_malloc(sampleRate * 2 * 2);
+    mSoundTouchBuffer = (SAMPLETYPE *) malloc(sampleRate * 2 * 2);
+    mSoundTouch = new SoundTouch();
+    //设置音频数据参数
+    mSoundTouch->setSampleRate(sampleRate);
+    mSoundTouch->setChannels(2);
+    mSoundTouch->setTempo(1);
+    mSoundTouch->setPitch(1);
 }
 
 Y10Audio::~Y10Audio() {
 }
 
-int Y10Audio::resampleAudio() {
-//    LOGI("resample");
+int Y10Audio::resampleAudio(void **out) {
+    mDataSize = 0;
     while (mPlayStatus != NULL && !mPlayStatus->mExit) {
         if (mY10Queue->getQueueSize() == 0) {//加载中
             if (!mPlayStatus->mLoad) {
@@ -81,16 +88,15 @@ int Y10Audio::resampleAudio() {
             }
 
             //计算采样个数,返回这个AVFrame里每个通道的样本输出
-            int nb = swr_convert(
+            mResampleNumber = swr_convert(
                     swr_ctx,
                     &mResampleBuffer,
                     mAVFrame->nb_samples,//采样个数
                     (const uint8_t **) mAVFrame->data,//pcm
                     mAVFrame->nb_samples);
-
             //输出声道
             int out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
-            mDataSize = nb * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+            mDataSize = mResampleNumber * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
 //            LOGE("data_size is %d nb=%d", mDataSize, nb);
 //            fwrite(&mResampleBuffer,1,mDataSize,outfile);
 
@@ -100,6 +106,7 @@ int Y10Audio::resampleAudio() {
                 mNowTime = mClockTime;
             }
             mClockTime = mNowTime;
+            *out = mResampleBuffer;
 
             //释放资源
             av_packet_free(&mAVPacket);
@@ -124,15 +131,48 @@ int Y10Audio::resampleAudio() {
             continue;
         }
     }
-//    fclose(outfile);
     return mDataSize;
 }
+
+int Y10Audio::resampleWithSoundTouch() {
+    while (mPlayStatus != NULL && !mPlayStatus->mExit) {
+        mOutBuffer = NULL;
+        if (mReadSoundTouchBufferUnFinished) {
+            mReadSoundTouchBufferUnFinished = false;
+            mDataSize = resampleAudio((void **) &mOutBuffer);
+            if (mDataSize > 0) {
+                for (int i = 0; i < mDataSize / 2 + 1; i++) {
+                    mSoundTouchBuffer[i] = (mOutBuffer[i * 2] | (mOutBuffer[i * 2 + 1] << 8));
+                }
+                mSoundTouch->putSamples(mSoundTouchBuffer, mResampleNumber);
+                mSoundTouchSampleNum = mSoundTouch->receiveSamples(mSoundTouchBuffer, mDataSize / 4);
+            } else {//采样结束
+                mSoundTouch->flush();
+            }
+        }
+        if (mSoundTouchSampleNum == 0) {
+            mReadSoundTouchBufferUnFinished = true;
+            continue;
+        } else {
+            if (mOutBuffer == NULL) {
+                mSoundTouchSampleNum = mSoundTouch->receiveSamples(mSoundTouchBuffer, mDataSize / 4);
+                if (mSoundTouchSampleNum == 0) {
+                    mReadSoundTouchBufferUnFinished = true;
+                    continue;
+                }
+            }
+            return mSoundTouchSampleNum;
+        }
+    }
+    return 0;
+}
+
 
 void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
 //    LOGI("pcmBufferCallBack");
     Y10Audio *audio = (Y10Audio *) context;
     if (audio != NULL) {
-        int bufferSize = audio->resampleAudio();
+        int bufferSize = audio->resampleWithSoundTouch();
         if (bufferSize > 0) {
             //播放时间
             audio->mClockTime += bufferSize / ((double)(audio->mSampleRate * 2 * 2));//采样个数除以一秒的采样个数就是相应的时间
@@ -141,7 +181,7 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
                 //回调应用层
                 audio->mCallJava->onCallTimeChanged(CHILD_THREAD, audio->mClockTime, audio->mDuration);
             }
-            (*audio->pcmBufferQueue)->Enqueue(audio->pcmBufferQueue, (char *) audio->mResampleBuffer, bufferSize);
+            (*audio->pcmBufferQueue)->Enqueue(audio->pcmBufferQueue, (char *) audio->mSoundTouchBuffer, bufferSize * 4);
         }
     }
 }
@@ -374,3 +414,18 @@ void Y10Audio::setMute(int mute) {
         }
     }
 }
+
+void Y10Audio::setPitch(float pitch) {
+    if (mSoundTouch != NULL) {
+        mPitch = pitch;
+        mSoundTouch->setPitch(pitch);
+    }
+}
+
+void Y10Audio::setSpeed(float speed) {
+    if (mSoundTouch != NULL) {
+        mSpeed = speed;
+        mSoundTouch->setTempo(speed);
+    }
+}
+

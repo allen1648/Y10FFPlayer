@@ -199,4 +199,24 @@ public class MainActivity extends Activity {
     public void volumeRight(View view) {
         mPlayer.setMute(FF10Player.MUTE_RIGHT);
     }
+
+    public void speedUpNoPitchUp(View view) {
+        mPlayer.setSpeed(1.5f);
+        mPlayer.setPitch(1f);
+    }
+
+    public void pitchUpNoSpeedUp(View view) {
+        mPlayer.setSpeed(1f);
+        mPlayer.setPitch(1.5f);
+    }
+
+    public void speedUpPitchUp(View view) {
+        mPlayer.setSpeed(1.5f);
+        mPlayer.setPitch(1.5f);
+    }
+
+    public void noSpeedUpNoPitchUp(View view) {
+        mPlayer.setSpeed(1f);
+        mPlayer.setPitch(1f);
+    }
 }

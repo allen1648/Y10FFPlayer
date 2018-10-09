@@ -4,9 +4,9 @@
 
 class PlayStatus {
 public:
-    bool mExit;//是否停止从
+    bool mExit;//判断播放是否停止
     bool mLoad = true;
-    bool mSeeking = false;
+    bool mSeeking = false;//是否正在seek
 
 public:
     PlayStatus();

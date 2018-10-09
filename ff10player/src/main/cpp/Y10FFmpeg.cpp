@@ -299,3 +299,15 @@ void Y10FFmpeg::setMute(int mute) {
         mAudio->setMute(mute);
     }
 }
+
+void Y10FFmpeg::setPitch(float pitch) {
+    if(mAudio != NULL) {
+        mAudio->setPitch(pitch);
+    }
+}
+
+void Y10FFmpeg::setSpeed(float speed) {
+    if(mAudio != NULL) {
+        mAudio->setSpeed(speed);
+    }
+}

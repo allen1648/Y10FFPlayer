@@ -93,4 +93,34 @@
             android:text="stereo" />
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="speedUpNoPitchUp"
+            android:text="变速不变调"/>
+        <Button
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="pitchUpNoSpeedUp"
+            android:text="变调不变速"/>
+        <Button
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="speedUpPitchUp"
+            android:text="变速变调"/>
+        <Button
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="noSpeedUpNoPitchUp"
+            android:text="不变速不变调"/>
+    </LinearLayout>
+
 </LinearLayout>
