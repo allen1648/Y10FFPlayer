@@ -27,7 +27,7 @@ int Y10Audio::resampleAudio(void **out) {
             av_usleep(1000 * 100);
             continue;
         }
-
+        //加载中判断
         if (mY10Queue->getQueueSize() == 0) {//加载中
             if (!mPlayStatus->mLoad) {
                 mPlayStatus->mLoad = true;
@@ -42,27 +42,31 @@ int Y10Audio::resampleAudio(void **out) {
             }
         }
 
-        mAVPacket = av_packet_alloc();
-        if (mY10Queue->getAVPacket(mAVPacket) != 0) {
-            //从队列获取AVPacket失败的情况
-            av_packet_free(&mAVPacket);
-            av_free(mAVPacket);
-            mAVPacket = NULL;
-            continue;
-        }
+        //读取AVPacket
+        if (mReadFrameFinished) {
+            mAVPacket = av_packet_alloc();
+            if (mY10Queue->getAVPacket(mAVPacket) != 0) {
+                //从队列获取AVPacket失败的情况
+                av_packet_free(&mAVPacket);
+                av_free(mAVPacket);
+                mAVPacket = NULL;
+                continue;
+            }
 
-        ret = avcodec_send_packet(mAVCodecContext, mAVPacket);//把AVPacket数据集成到avCodecContext中
-        if (ret != 0) {//失败
-            av_packet_free(&mAVPacket);
-            av_free(mAVPacket);
-            mAVPacket = NULL;
-            continue;
+            ret = avcodec_send_packet(mAVCodecContext, mAVPacket);//把AVPacket数据集成到avCodecContext中
+            if (ret != 0) {//失败
+                av_packet_free(&mAVPacket);
+                av_free(mAVPacket);
+                mAVPacket = NULL;
+                continue;
+            }
         }
 
         //开始将AVPacket转成AVFrame pcm数据
         mAVFrame = av_frame_alloc();
         ret = avcodec_receive_frame(mAVCodecContext, mAVFrame);
         if (ret == 0) {
+            mReadFrameFinished = false;
             //处理错误情况
             if (mAVFrame->channels > 0 && mAVFrame->channel_layout == 0) {
                 mAVFrame->channel_layout = av_get_default_channel_layout(mAVFrame->channels);
@@ -90,6 +94,7 @@ int Y10Audio::resampleAudio(void **out) {
                     swr_free(&swr_ctx);
                     swr_ctx = NULL;
                 }
+                mReadFrameFinished = true;
                 continue;
             }
 
@@ -115,9 +120,9 @@ int Y10Audio::resampleAudio(void **out) {
             *out = mResampleBuffer;
 
             //释放资源
-            av_packet_free(&mAVPacket);
-            av_free(mAVPacket);
-            mAVPacket = NULL;
+//            av_packet_free(&mAVPacket);
+//            av_free(mAVPacket);
+//            mAVPacket = NULL;
 
             av_frame_free(&mAVFrame);
             av_free(mAVFrame);
@@ -127,6 +132,7 @@ int Y10Audio::resampleAudio(void **out) {
             swr_ctx = NULL;
             break;
         } else {
+            mReadFrameFinished = true;
             av_packet_free(&mAVPacket);
             av_free(mAVPacket);
             mAVPacket = NULL;

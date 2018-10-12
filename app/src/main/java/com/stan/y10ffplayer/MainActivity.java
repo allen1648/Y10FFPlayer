@@ -2,6 +2,7 @@ package com.stan.y10ffplayer;
 
 import android.Manifest;
 import android.app.Activity;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -33,6 +34,7 @@ public class MainActivity extends Activity {
     private static final int SET_PROGRESS = 1;
     private int mPosition;
     private FF10Player mPlayer = new FF10Player();
+    private MediaPlayer mMediaPlayer = new MediaPlayer();
     private TextView mProgressTV;
     private TextView mVolumeTV;
     private SeekBar mProgressBar;

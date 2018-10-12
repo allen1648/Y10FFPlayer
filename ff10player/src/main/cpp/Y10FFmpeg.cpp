@@ -143,7 +143,7 @@ void Y10FFmpeg::start() {
             av_usleep(1000 * 100);//100ms
             continue;
         }
-        if(mAudio->mY10Queue->getQueueSize() > 100) {//不要一下子解码完毕
+        if(mAudio->mY10Queue->getQueueSize() > 1) {//不要一下子解码完毕
             av_usleep(1000 * 100);
             continue;
         }
@@ -213,6 +213,7 @@ void Y10FFmpeg::seek(int64_t secs) {
         mAudio->mLastTime = 0;
         pthread_mutex_lock(&mSeekMutex);
         int64_t realSecs = secs * AV_TIME_BASE;
+        avcodec_flush_buffers(mAudio->mAVCodecContext);
         avformat_seek_file(mAVFormatContext, -1, INT64_MIN, realSecs, INT64_MAX, 0);
         pthread_mutex_unlock(&mSeekMutex);
         mPlayStatus->mSeeking = false;

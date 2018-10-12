@@ -27,6 +27,7 @@ public:
     int mSoundTouchSampleNum = 0;
     bool mReadSoundTouchBufferUnFinished = true;
     bool mRecordingPcm = false;
+    bool mReadFrameFinished = false;//有时候AVPacket里包含多个AVFrame
     uint8_t *mResampleBuffer = NULL;//存储重采样的流
     uint8_t *mOutBuffer = NULL;//
     AVCodecContext *mAVCodecContext = NULL;
