@@ -41,7 +41,7 @@ public class FF10Player {
     private int mVolume;
 
     public FF10Player(){
-        mAACEncoder = new FF10Encoder();
+        mAACEncoder = new FF10Encoder(this);
     }
 
     public int getDuration() {
@@ -163,6 +163,10 @@ public class FF10Player {
             nStopStartRecord(false);
             mAACEncoder.releaseMediaCodec();
         }
+    }
+
+    public int getSampleRate() {
+        return nGetSampleRate();
     }
 
     /* called from jni */

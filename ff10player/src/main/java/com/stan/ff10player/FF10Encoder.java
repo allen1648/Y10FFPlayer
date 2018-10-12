@@ -22,9 +22,18 @@ public class FF10Encoder {
     private byte[] mOutByteBuffer = null;
     private int mPcmSize;
     private int mSampleRate;
+    private double mRecordTime;
+    private FF10Player mPlayer;
+
+    public FF10Encoder(FF10Player player){
+        mPlayer = player;
+        mSampleRate = player.getSampleRate();
+    }
 
     public void pcm2aac(int size, byte[] buffer) {
         if (buffer != null && mEncoder != null) {
+            int sampleRate = mSampleRate;
+            mRecordTime += (double) size / (double)(sampleRate * 2 * 2);
             int inputBufferindex = mEncoder.dequeueInputBuffer(0);
             if (inputBufferindex >= 0) {
                 ByteBuffer byteBuffer = mEncoder.getInputBuffers()[inputBufferindex];
@@ -64,6 +73,7 @@ public class FF10Encoder {
         if(mEncoder == null) {
             return;
         }
+        mRecordTime = 0;
         try {
             mOutputStream.close();
             mOutputStream = null;
@@ -89,6 +99,7 @@ public class FF10Encoder {
     }
 
     public void initMediaCodec(int sampleRate, File outputFile) {
+        mRecordTime = 0;
         mSampleRate = getADTSsamplerate(sampleRate);
         mEncoderFormat = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, sampleRate, 2);
         mEncoderFormat.setInteger(MediaFormat.KEY_BIT_RATE, 96000);
