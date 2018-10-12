@@ -8,6 +8,8 @@ import com.stan.ff10player.listener.OnPreparedListener;
 import com.stan.ff10player.listener.OnResumePauseListener;
 import com.stan.ff10player.listener.OnTimeChangedListener;
 
+import java.io.File;
+
 public class FF10Player {
     static {
         System.loadLibrary("native-lib");
@@ -29,8 +31,14 @@ public class FF10Player {
     private OnTimeChangedListener mOnTimeChangedListener;
     private OnLoadListener mOnLoadListener;
     private OnErrorListener mOnErrorListener;
+
     private String mSourceUrl;
     private int mDuration;
+    private FF10Encoder mAACEncoder;
+
+    public FF10Player(){
+        mAACEncoder = new FF10Encoder();
+    }
 
     /* 音量值0~100 */
     private int mVolume;
@@ -115,8 +123,25 @@ public class FF10Player {
     public void setSpeed(float speed) {
         nSetSpeed(speed);
     }
+
     public void setPitch(float pitch) {
         nSetPitch(pitch);
+    }
+
+    public boolean isPlaying() {
+        return nIsPlaying();
+    }
+
+    /* 时间是秒 */
+    public int getCurrentPosition() {
+        return nGetCurrentPosition();
+    }
+
+    public void startRecord(File out) {
+        int sampleRate = nGetSampleRate();
+        if(sampleRate > 0) {
+            mAACEncoder.initMediaCodec(sampleRate, out);
+        }
     }
 
     /* called from jni */
@@ -154,6 +179,11 @@ public class FF10Player {
         Log.i("yyl", "onCallComplete java");
     }
 
+    /* called from jni */
+    private void pcm2aac(int size, byte[] buffer) {
+        mAACEncoder.pcm2aac(size, buffer);
+    }
+
     private native int nPrepare(String url);
 
     private native int nStart();
@@ -177,4 +207,13 @@ public class FF10Player {
     private native int nSetPitch(float pitch);
 
     private native int nSetSpeed(float speed);
+
+    private native int nGetSampleRate();
+
+    private native int nGetCurrentPosition();
+
+    private native boolean nIsPlaying();
+
+
+
 }

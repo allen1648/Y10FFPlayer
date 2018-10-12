@@ -1,7 +1,9 @@
 #include "PlayStatus.h"
 
 PlayStatus::PlayStatus() {
-    mExit = false;
+    mExited = false;
+    mIsPlaying = false;
+
 }
 
 PlayStatus::~PlayStatus() {

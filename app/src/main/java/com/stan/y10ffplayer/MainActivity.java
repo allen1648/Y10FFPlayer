@@ -21,6 +21,8 @@ import com.stan.y10ffplayer.Utils.LogUtil;
 import com.stan.y10ffplayer.Utils.PermissionUtil;
 import com.stan.y10ffplayer.Utils.TimeUtil;
 
+import java.io.File;
+
 public class MainActivity extends Activity {
     private static final int OPEN_INPUT_FAILED = 1001;
     private static final int FIND_STREAM_FAILED = 1002;
@@ -218,5 +220,10 @@ public class MainActivity extends Activity {
     public void noSpeedUpNoPitchUp(View view) {
         mPlayer.setSpeed(1f);
         mPlayer.setPitch(1f);
+    }
+
+    public void startRecord(View view) {
+        File out = new File("/sdcard/outaac.aac");
+        mPlayer.startRecord(out);
     }
 }

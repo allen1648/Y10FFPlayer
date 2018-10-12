@@ -27,6 +27,7 @@ public:
     jmethodID mJmethodComplete;
     jmethodID mJmethodStop;
     jmethodID mJmethodNext;
+    jmethodID mJmethodPcm2aac;
 
 public:
     CallJava(JavaVM *javaVM, JNIEnv *env, jobject *obj);
@@ -40,6 +41,7 @@ public:
     void onCallComplete(int type);
     void onCallStop(int type);
     void onCallNext(int type);
+    void onCallPcm2aac(int type, int size, void* buffer);
 };
 
 #endif //INC_10FFMPEGPLAYER_CALLJAVA_H

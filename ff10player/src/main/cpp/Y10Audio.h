@@ -15,7 +15,10 @@ class Y10Audio {
 public:
     int mStreamIndex = -1;
     int ret = 0;
+
+    /* 解码一个AVFrame后所需DataSize(会有多个音频帧) */
     int mDataSize = 0;
+
     int mSampleRate = 0;
     int mDuration = 0;//单位秒
     int mVolumePercent = 100;
@@ -33,7 +36,7 @@ public:
     pthread_t mPlayThread;
     CallJava *mCallJava = NULL;
     AVRational mTimeBase;//分子/分母 就是一个Frame的时间
-    double mClockTime;//总的播放时长
+    double mClockTime;//总的播放时长,暂时认定为duration
     double mNowTime = 0;//当前frame播放时间
     double mLastTime = 0; //上一次调用时间
     float mPitch = 1.0f;//声调
@@ -75,9 +78,11 @@ public:
     void setPitch(float pitch);
     void setSpeed(float speed);
     int resampleAudio(void **out);
-//    int resampleAudio();
     int resampleWithSoundTouch();
     SLuint32 getCurrentSampleRateForOpensles(int sample_rate);
+    bool isPlaying();
+
+    int getCurrentPosition();
 };
 
 

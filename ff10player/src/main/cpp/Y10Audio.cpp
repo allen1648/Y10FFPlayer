@@ -22,7 +22,7 @@ Y10Audio::~Y10Audio() {
 
 int Y10Audio::resampleAudio(void **out) {
     mDataSize = 0;
-    while (mPlayStatus != NULL && !mPlayStatus->mExit) {
+    while (mPlayStatus != NULL && !mPlayStatus->mExited) {
         if (mY10Queue->getQueueSize() == 0) {//加载中
             if (!mPlayStatus->mLoad) {
                 mPlayStatus->mLoad = true;
@@ -91,7 +91,7 @@ int Y10Audio::resampleAudio(void **out) {
             mResampleNumber = swr_convert(
                     swr_ctx,
                     &mResampleBuffer,
-                    mAVFrame->nb_samples,//采样个数
+                    mAVFrame->nb_samples,//音频的一个AVFrame中可能包含多个音频帧，在此标记包含了几个
                     (const uint8_t **) mAVFrame->data,//pcm
                     mAVFrame->nb_samples);
             //输出声道
@@ -135,7 +135,7 @@ int Y10Audio::resampleAudio(void **out) {
 }
 
 int Y10Audio::resampleWithSoundTouch() {
-    while (mPlayStatus != NULL && !mPlayStatus->mExit) {
+    while (mPlayStatus != NULL && !mPlayStatus->mExited) {
         mOutBuffer = NULL;
         if (mReadSoundTouchBufferUnFinished) {
             mReadSoundTouchBufferUnFinished = false;
@@ -172,16 +172,18 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
 //    LOGI("pcmBufferCallBack");
     Y10Audio *audio = (Y10Audio *) context;
     if (audio != NULL) {
-        int bufferSize = audio->resampleWithSoundTouch();
-        if (bufferSize > 0) {
+        int sampleNum = audio->resampleWithSoundTouch();
+        if (sampleNum > 0) {
             //播放时间
-            audio->mClockTime += bufferSize / ((double)(audio->mSampleRate * 2 * 2));//采样个数除以一秒的采样个数就是相应的时间
-            if(audio->mClockTime - audio->mLastTime >= 0.1) {//每隔100ms
+            audio->mClockTime += sampleNum / ((double)(audio->mSampleRate * 2 * 2));//采样个数除以一秒的采样个数就是相应的时间
+            if(audio->mClockTime - audio->mLastTime >= 0.1) {//每隔100ms发送一次进度条更新
                 audio->mLastTime = audio->mClockTime;
                 //回调应用层
                 audio->mCallJava->onCallTimeChanged(CHILD_THREAD, audio->mClockTime, audio->mDuration);
             }
-            (*audio->pcmBufferQueue)->Enqueue(audio->pcmBufferQueue, (char *) audio->mSoundTouchBuffer, bufferSize * 4);
+            //录音到文件
+//            audio->mCallJava->onCallPcm2aac(CHILD_THREAD, sampleNum * 2 * 2, audio->mSoundTouchBuffer);
+            (*audio->pcmBufferQueue)->Enqueue(audio->pcmBufferQueue, (char *) audio->mSoundTouchBuffer, sampleNum * 2 * 2);
         }
     }
 }
@@ -427,5 +429,17 @@ void Y10Audio::setSpeed(float speed) {
         mSpeed = speed;
         mSoundTouch->setTempo(speed);
     }
+}
+
+bool Y10Audio::isPlaying() {
+    if(pcmPlayerImpl != NULL) {
+        SLuint32 state = SL_PLAYSTATE_PLAYING;
+        return (*pcmPlayerImpl)->GetPlayState(pcmPlayerImpl, &state);
+    }
+    return false;
+}
+
+int Y10Audio::getCurrentPosition() {
+    return (int)mClockTime;
 }
 

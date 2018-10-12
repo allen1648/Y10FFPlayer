@@ -123,4 +123,9 @@
             android:text="不变速不变调"/>
     </LinearLayout>
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="startRecord"
+        android:text="开始录制"/>
 </LinearLayout>

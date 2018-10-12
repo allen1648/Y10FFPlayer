@@ -25,7 +25,7 @@ int Y10Queue::putAVPacket(AVPacket *packet) {
 
 int Y10Queue::getAVPacket(AVPacket *packet) {
     pthread_mutex_lock(&mThreadMutex);
-    while (mPlayStatus != NULL && !mPlayStatus->mExit) {
+    while (mPlayStatus != NULL && !mPlayStatus->mExited) {
         if (mPacketQueue.size() > 0) {
             AVPacket *front = mPacketQueue.front();//得到对列头但不出栈
             if (av_packet_ref(packet, front) == 0) {//把得到的AVPacket引用附给packet

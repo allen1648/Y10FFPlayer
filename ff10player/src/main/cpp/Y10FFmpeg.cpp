@@ -121,7 +121,7 @@ void Y10FFmpeg::decodeFFmpegThread() {
     }
 
     if(mCallJava != NULL) {
-        if(mPlayStatus != NULL && !mPlayStatus->mExit) {
+        if(mPlayStatus != NULL && !mPlayStatus->mExited) {
             mCallJava->onCallPrepared(CHILD_THREAD);
         } else {
             mPrepareExit = true;
@@ -138,7 +138,7 @@ void Y10FFmpeg::start() {
     }
     mAudio->start();
     int count = 0;
-    while (mPlayStatus != NULL && !mPlayStatus->mExit) {
+    while (mPlayStatus != NULL && !mPlayStatus->mExited) {
         if(mPlayStatus->mSeeking) {
             continue;
         }
@@ -167,11 +167,11 @@ void Y10FFmpeg::start() {
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
-            while (mPlayStatus != NULL && !mPlayStatus->mExit) {//缓存还有数据要播放
+            while (mPlayStatus != NULL && !mPlayStatus->mExited) {//缓存还有数据要播放
                 if (mAudio->mY10Queue->getQueueSize() > 0) {//用来判断是否播放完毕,播放完毕就判定结束
                     continue;
                 } else {
-                    mPlayStatus->mExit = true;
+                    mPlayStatus->mExited = true;
                     break;
                 }
             }
@@ -221,7 +221,7 @@ void Y10FFmpeg::release() {
         LOGI("release ffmpeg");
     }
 
-    mPlayStatus->mExit = true;
+    mPlayStatus->mExited = true;
     pthread_mutex_lock(&mInitMutex);
 
     //防止无限等待的处理
@@ -262,7 +262,7 @@ void Y10FFmpeg::release() {
 }
 
 void Y10FFmpeg::forceStop() {
-    mPlayStatus->mExit = true;
+    mPlayStatus->mExited = true;
     mPrepareExit = true;
     pthread_mutex_lock(&mInitMutex);
     if(mAudio != NULL) {
@@ -310,4 +310,25 @@ void Y10FFmpeg::setSpeed(float speed) {
     if(mAudio != NULL) {
         mAudio->setSpeed(speed);
     }
+}
+
+int Y10FFmpeg::getSampleRate() {
+    if(mAudio != NULL) {
+        return mAudio->mAVCodecContext->sample_rate;
+    }
+    return 0;
+}
+
+bool Y10FFmpeg::isPlaying() {
+    if(mAudio != NULL) {
+        return mAudio->isPlaying();
+    }
+    return false;
+}
+
+int Y10FFmpeg::getCurrentPosition() {
+    if(mAudio != NULL) {
+        return mAudio->getCurrentPosition();
+    }
+    return 0;
 }

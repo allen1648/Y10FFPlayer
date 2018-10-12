@@ -22,6 +22,7 @@ CallJava::CallJava(_JavaVM *javaVM, JNIEnv *env, jobject *obj) {
     mJmethodTimeChanged = env->GetMethodID(jclz, "onCallTimeChanged", "(II)V");
     mJmethodError = env->GetMethodID(jclz, "onCallError", "(ILjava/lang/String;)V");
     mJmethodComplete = env->GetMethodID(jclz, "onCallComplete", "()V");
+    mJmethodPcm2aac = env->GetMethodID(jclz, "pcm2aac", "(I[B})V");
 
 }
 
@@ -142,6 +143,28 @@ void CallJava::onCallNext(int type) {
             return;
         }
         jniEnv->CallVoidMethod(mJobj, mJmethodStop);
+        mJavaVM->DetachCurrentThread();
+    }
+}
+
+void CallJava::onCallPcm2aac(int type, int size, void* buffer) {
+    if (type == MAIN_THREAD) {
+        jbyteArray jbuffer = mJniEnv->NewByteArray(size);
+        mJniEnv->SetByteArrayRegion(jbuffer, 0, size, (const jbyte *) (buffer));
+        mJniEnv->CallVoidMethod(mJobj, mJmethodPcm2aac, size, jbuffer);
+        mJniEnv->DeleteLocalRef(jbuffer);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *jniEnv;
+        if (mJavaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK) {
+            if (LOG_DEBUG) {
+                LOGE("call onCallPcm2aac wrong");
+            }
+            return;
+        }
+        jbyteArray jbuffer = jniEnv->NewByteArray(size);
+        jniEnv->SetByteArrayRegion(jbuffer, 0, size, (const jbyte *)(buffer));
+        jniEnv->CallVoidMethod(mJobj, mJmethodPcm2aac, size, jbuffer);
+        jniEnv->DeleteLocalRef(jbuffer);
         mJavaVM->DetachCurrentThread();
     }
 }

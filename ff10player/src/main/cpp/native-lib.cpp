@@ -173,3 +173,30 @@ Java_com_stan_ff10player_FF10Player_nSetSpeed(JNIEnv *env, jobject instance, jfl
     }
     return 0;
 }
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_stan_ff10player_FF10Player_nGetSampleRate(JNIEnv *env, jobject instance) {
+    if(ffmpeg != NULL) {
+        return ffmpeg->getSampleRate();
+    }
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_stan_ff10player_FF10Player_nIsPlaying(JNIEnv *env, jobject instance) {
+    if(ffmpeg != NULL) {
+        return ffmpeg->isPlaying();
+    }
+    return false;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_stan_ff10player_FF10Player_nGetCurrentPosition(JNIEnv *env, jobject instance) {
+    if(ffmpeg != NULL) {
+        return ffmpeg->getCurrentPosition();
+    }
+    return 0;
+}
