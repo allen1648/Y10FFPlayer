@@ -23,11 +23,17 @@ Y10Audio::~Y10Audio() {
 int Y10Audio::resampleAudio(void **out) {
     mDataSize = 0;
     while (mPlayStatus != NULL && !mPlayStatus->mExited) {
+        if(mPlayStatus->mSeeking) {
+            av_usleep(1000 * 100);
+            continue;
+        }
+
         if (mY10Queue->getQueueSize() == 0) {//加载中
             if (!mPlayStatus->mLoad) {
                 mPlayStatus->mLoad = true;
                 mCallJava->onCallLoad(CHILD_THREAD, true);
             }
+            av_usleep(1000 * 100);
             continue;
         } else {
             if (mPlayStatus->mLoad) {
@@ -294,6 +300,8 @@ void Y10Audio::release() {
         pcmPlayerObject = NULL;
         pcmPlayerImpl = NULL;
         pcmBufferQueue = NULL;
+        pcmMuteImpl = NULL;
+        pcmVolumeImpl = NULL;
     }
 
     if (outputMixObject != NULL) {
@@ -308,9 +316,23 @@ void Y10Audio::release() {
         engineEngine = NULL;
     }
 
+    if(mOutBuffer != NULL) {
+        mOutBuffer = NULL;
+    }
+
     if (mResampleBuffer != NULL) {
         free(mResampleBuffer);
         mResampleBuffer = NULL;
+    }
+
+    if(mSoundTouch != NULL) {
+        delete(mSoundTouch);
+        mSoundTouch = NULL;
+    }
+
+    if(mSoundTouchBuffer != NULL) {
+        free(mSoundTouchBuffer);
+        mSoundTouchBuffer = NULL;
     }
 
     if (mAVCodecContext != NULL) {

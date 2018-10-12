@@ -140,9 +140,11 @@ void Y10FFmpeg::start() {
     int count = 0;
     while (mPlayStatus != NULL && !mPlayStatus->mExited) {
         if(mPlayStatus->mSeeking) {
+            av_usleep(1000 * 100);//100ms
             continue;
         }
-        if(mAudio->mY10Queue->getQueueSize() > 40) {//不要一下子解码完毕
+        if(mAudio->mY10Queue->getQueueSize() > 100) {//不要一下子解码完毕
+            av_usleep(1000 * 100);
             continue;
         }
         AVPacket *avPacket = av_packet_alloc();
@@ -169,6 +171,7 @@ void Y10FFmpeg::start() {
             avPacket = NULL;
             while (mPlayStatus != NULL && !mPlayStatus->mExited) {//缓存还有数据要播放
                 if (mAudio->mY10Queue->getQueueSize() > 0) {//用来判断是否播放完毕,播放完毕就判定结束
+                    av_usleep(1000 * 100);
                     continue;
                 } else {
                     mPlayStatus->mExited = true;
