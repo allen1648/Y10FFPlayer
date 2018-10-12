@@ -35,13 +35,14 @@ public class FF10Player {
     private String mSourceUrl;
     private int mDuration;
     private FF10Encoder mAACEncoder;
+    public static boolean initmediacodec = false;
+
+    /* 音量值0~100 */
+    private int mVolume;
 
     public FF10Player(){
         mAACEncoder = new FF10Encoder();
     }
-
-    /* 音量值0~100 */
-    private int mVolume;
 
     public int getDuration() {
         return mDuration;
@@ -138,9 +139,29 @@ public class FF10Player {
     }
 
     public void startRecord(File out) {
-        int sampleRate = nGetSampleRate();
-        if(sampleRate > 0) {
-            mAACEncoder.initMediaCodec(sampleRate, out);
+        if (!initmediacodec) {
+            int sampleRate = nGetSampleRate();
+            if (sampleRate > 0) {
+                initmediacodec = true;
+                mAACEncoder.initMediaCodec(sampleRate, out);
+            }
+            nStopStartRecord(true);
+        }
+    }
+
+    public void pauseReord() {
+        nStopStartRecord(false);
+    }
+
+    public void resumeRecord() {
+        nStopStartRecord(true);
+    }
+
+
+    public void stopRecord() {
+        if(initmediacodec) {
+            nStopStartRecord(false);
+            mAACEncoder.releaseMediaCodec();
         }
     }
 
@@ -181,7 +202,12 @@ public class FF10Player {
 
     /* called from jni */
     private void pcm2aac(int size, byte[] buffer) {
+        Log.i("yyl", "pcm2aac size:" + size);
         mAACEncoder.pcm2aac(size, buffer);
+    }
+
+    private void releaseMediaCodec(){
+        mAACEncoder.releaseMediaCodec();
     }
 
     private native int nPrepare(String url);
@@ -213,6 +239,8 @@ public class FF10Player {
     private native int nGetCurrentPosition();
 
     private native boolean nIsPlaying();
+
+    private native void nStopStartRecord(boolean start);
 
 
 

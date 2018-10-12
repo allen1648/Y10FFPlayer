@@ -332,3 +332,9 @@ int Y10FFmpeg::getCurrentPosition() {
     }
     return 0;
 }
+
+void Y10FFmpeg::startStopRecord(bool start) {
+    if(mAudio != NULL) {
+        mAudio->startStopRecord(start);
+    }
+}

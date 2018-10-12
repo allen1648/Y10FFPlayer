@@ -25,6 +25,7 @@ public:
     int mResampleNumber = 0;//重采样个数, swr_convert()返回
     int mSoundTouchSampleNum = 0;
     bool mReadSoundTouchBufferUnFinished = true;
+    bool mRecordingPcm = false;
     uint8_t *mResampleBuffer = NULL;//存储重采样的流
     uint8_t *mOutBuffer = NULL;//
     AVCodecContext *mAVCodecContext = NULL;
@@ -83,6 +84,9 @@ public:
     bool isPlaying();
 
     int getCurrentPosition();
+
+    /* 开启/关闭录音 */
+    void startStopRecord(bool b);
 };
 
 

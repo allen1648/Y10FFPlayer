@@ -45,7 +45,7 @@ public:
     int getSampleRate();
     bool isPlaying();
     int getCurrentPosition();
-
+    void startStopRecord(bool start);
 };
 
 #endif //INC_10FFMPEGPLAYER_Y10FFMPEG_H

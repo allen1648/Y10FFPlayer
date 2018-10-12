@@ -167,7 +167,6 @@ int Y10Audio::resampleWithSoundTouch() {
     return 0;
 }
 
-
 void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
 //    LOGI("pcmBufferCallBack");
     Y10Audio *audio = (Y10Audio *) context;
@@ -182,7 +181,9 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
                 audio->mCallJava->onCallTimeChanged(CHILD_THREAD, audio->mClockTime, audio->mDuration);
             }
             //录音到文件
-//            audio->mCallJava->onCallPcm2aac(CHILD_THREAD, sampleNum * 2 * 2, audio->mSoundTouchBuffer);
+            if(audio->mRecordingPcm) {
+//                audio->mCallJava->onCallPcm2aac(CHILD_THREAD, sampleNum * 2 * 2, audio->mSoundTouchBuffer);
+            }
             (*audio->pcmBufferQueue)->Enqueue(audio->pcmBufferQueue, (char *) audio->mSoundTouchBuffer, sampleNum * 2 * 2);
         }
     }
@@ -441,5 +442,9 @@ bool Y10Audio::isPlaying() {
 
 int Y10Audio::getCurrentPosition() {
     return (int)mClockTime;
+}
+
+void Y10Audio::startStopRecord(bool start) {
+    mRecordingPcm = start;
 }
 

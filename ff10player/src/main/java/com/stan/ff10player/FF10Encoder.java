@@ -3,6 +3,7 @@ package com.stan.ff10player;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -13,7 +14,6 @@ import java.nio.ByteBuffer;
  * 目前只支持编码AAC
  */
 public class FF10Encoder {
-    private static final int AAC_SAMPLERATE = 4;
     //mediacodec
     private MediaFormat mEncoderFormat = null;
     private MediaCodec mEncoder = null;
@@ -21,6 +21,7 @@ public class FF10Encoder {
     private FileOutputStream mOutputStream = null;
     private byte[] mOutByteBuffer = null;
     private int mPcmSize;
+    private int mSampleRate;
 
     public void pcm2aac(int size, byte[] buffer) {
         if (buffer != null && mEncoder != null) {
@@ -42,7 +43,7 @@ public class FF10Encoder {
                     byteBuffer.position(mBufferInfo.offset);
                     byteBuffer.limit(mBufferInfo.offset + mBufferInfo.size);
 
-                    addADTStoPacket(mOutByteBuffer, mPcmSize, AAC_SAMPLERATE);
+                    addADTStoPacket(mOutByteBuffer, mPcmSize, mSampleRate);
 
                     byteBuffer.get(mOutByteBuffer, 7, mBufferInfo.size);
                     byteBuffer.position(mBufferInfo.offset);
@@ -51,6 +52,35 @@ public class FF10Encoder {
                     mEncoder.releaseOutputBuffer(index, false);
                     index = mEncoder.dequeueOutputBuffer(mBufferInfo, 0);
                     mOutByteBuffer = null;
+                    Log.d("yyl","编码...");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public void releaseMediaCodec() {
+        if(mEncoder == null) {
+            return;
+        }
+        try {
+            mOutputStream.close();
+            mOutputStream = null;
+            mEncoder.stop();
+            mEncoder.release();
+            mEncoder = null;
+            mEncoderFormat = null;
+            mBufferInfo = null;
+            FF10Player.initmediacodec = true;
+            Log.i("yyl","录制完成");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if(mOutputStream != null) {
+                try {
+                    mOutputStream.close();
+                    mOutputStream = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -59,20 +89,23 @@ public class FF10Encoder {
     }
 
     public void initMediaCodec(int sampleRate, File outputFile) {
+        mSampleRate = getADTSsamplerate(sampleRate);
         mEncoderFormat = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, sampleRate, 2);
         mEncoderFormat.setInteger(MediaFormat.KEY_BIT_RATE, 96000);
         mEncoderFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         mEncoderFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 4096);
         try {
             mEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC);
+            if (mEncoder == null) {
+                return;
+            }
+            mBufferInfo = new MediaCodec.BufferInfo();
+            mEncoder.configure(mEncoderFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+            mOutputStream = new FileOutputStream(outputFile);
+            mEncoder.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (mEncoder == null) {
-            return;
-        }
-        mEncoder.configure(mEncoderFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-        mEncoder.start();
     }
 
     private void addADTStoPacket(byte[] packet, int packetLen, int sampleRate) {

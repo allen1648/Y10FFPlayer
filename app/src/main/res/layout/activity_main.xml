@@ -97,35 +97,68 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
+
         <Button
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:onClick="speedUpNoPitchUp"
-            android:text="变速不变调"/>
+            android:text="变速不变调" />
+
         <Button
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:onClick="pitchUpNoSpeedUp"
-            android:text="变调不变速"/>
+            android:text="变调不变速" />
+
         <Button
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:onClick="speedUpPitchUp"
-            android:text="变速变调"/>
+            android:text="变速变调" />
+
         <Button
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:onClick="noSpeedUpNoPitchUp"
-            android:text="不变速不变调"/>
+            android:text="不变速不变调" />
     </LinearLayout>
 
-    <Button
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="startRecord"
-        android:text="开始录制"/>
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="startRecord"
+            android:text="开始录制" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="pauseRecord"
+            android:text="暂停录制" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="resumeRecord"
+            android:text="继续录制" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="stopRecord"
+            android:text="停止录制" />
+    </LinearLayout>
 </LinearLayout>

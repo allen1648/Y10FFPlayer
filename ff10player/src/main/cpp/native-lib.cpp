@@ -200,3 +200,11 @@ Java_com_stan_ff10player_FF10Player_nGetCurrentPosition(JNIEnv *env, jobject ins
     }
     return 0;
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_stan_ff10player_FF10Player_nStopStartRecord(JNIEnv *env, jobject instance, jboolean stop) {
+    if(ffmpeg != NULL) {
+        ffmpeg->startStopRecord(stop);
+    }
+}

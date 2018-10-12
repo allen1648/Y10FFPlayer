@@ -22,7 +22,7 @@ CallJava::CallJava(_JavaVM *javaVM, JNIEnv *env, jobject *obj) {
     mJmethodTimeChanged = env->GetMethodID(jclz, "onCallTimeChanged", "(II)V");
     mJmethodError = env->GetMethodID(jclz, "onCallError", "(ILjava/lang/String;)V");
     mJmethodComplete = env->GetMethodID(jclz, "onCallComplete", "()V");
-    mJmethodPcm2aac = env->GetMethodID(jclz, "pcm2aac", "(I[B})V");
+    mJmethodPcm2aac = env->GetMethodID(jclz, "pcm2aac", "(I[B)V");
 
 }
 

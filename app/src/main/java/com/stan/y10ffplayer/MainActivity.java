@@ -223,7 +223,19 @@ public class MainActivity extends Activity {
     }
 
     public void startRecord(View view) {
-        File out = new File("/sdcard/outaac.aac");
+        File out = new File("/sdcard/testrecord.aac");
         mPlayer.startRecord(out);
+    }
+
+    public void pauseRecord(View view) {
+        mPlayer.pauseReord();
+    }
+
+    public void resumeRecord(View view) {
+        mPlayer.resumeRecord();
+    }
+
+    public void stopRecord(View view) {
+        mPlayer.stopRecord();
     }
 }
