@@ -13,6 +13,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.stan.ff10player.FF10Player;
+import com.stan.ff10player.listener.OnCallPcmInfoListener;
+import com.stan.ff10player.listener.OnCallPcmRateListener;
 import com.stan.ff10player.listener.OnErrorListener;
 import com.stan.ff10player.listener.OnLoadListener;
 import com.stan.ff10player.listener.OnPreparedListener;
@@ -171,6 +173,18 @@ public class MainActivity extends Activity {
                 LogUtil.i("yyl", "onError code:" + code + " msg:" + msg);
             }
         });
+        mPlayer.setOnCallPcmInfoListener(new OnCallPcmInfoListener() {
+            @Override
+            public void onCallPcmInfo(byte[] buffer, int bufferSize) {
+                Log.i("yyl", "bufferSize:" + bufferSize);
+            }
+        });
+        mPlayer.setOnCallPcmRateListener(new OnCallPcmRateListener() {
+            @Override
+            public void onCallPcmRate(int sampleRate) {
+                Log.i("yyl", "sampleRate:" + sampleRate);
+            }
+        });
         mPlayer.setVolume(50);
     }
 
@@ -239,5 +253,20 @@ public class MainActivity extends Activity {
 
     public void stopRecord(View view) {
         mPlayer.stopRecord();
+    }
+
+    public void cut(View view) {
+        mPlayer.setDataSourceAndPrepare("/sdcard/zly.mp3");
+        mPlayer.setOnPrepareListener(new OnPreparedListener() {
+            @Override
+            public void onSuccess() {
+                mPlayer.cutAudio();
+            }
+
+            @Override
+            public void onError() {
+
+            }
+        });
     }
 }

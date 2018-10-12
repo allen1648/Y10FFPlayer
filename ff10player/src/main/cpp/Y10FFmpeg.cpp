@@ -81,6 +81,7 @@ void Y10FFmpeg::decodeFFmpegThread() {
                 mAudio->mDuration = mAVFormatContext->duration / AV_TIME_BASE;
                 mAudio->mTimeBase = mAVFormatContext->streams[i]->time_base;
                 mDuration = mAudio->mDuration;
+                mAudio->mCallJava->onCallPcmRate(CHILD_THREAD, mAudio->mSampleRate);
             }
         }
     }
@@ -143,7 +144,7 @@ void Y10FFmpeg::start() {
             av_usleep(1000 * 100);//100ms
             continue;
         }
-        if(mAudio->mY10Queue->getQueueSize() > 1) {//不要一下子解码完毕
+        if(mAudio->mY10Queue->getQueueSize() > 20) {//不要一下子解码完毕
             av_usleep(1000 * 100);
             continue;
         }
@@ -341,4 +342,15 @@ void Y10FFmpeg::startStopRecord(bool start) {
     if(mAudio != NULL) {
         mAudio->startStopRecord(start);
     }
+}
+
+bool Y10FFmpeg::cutAudio(int start, int end, bool showPcm) {
+    if (start >= 0 && end <= mDuration && start < end) {
+        mAudio->cut = true;
+        mAudio->endTime = end;
+        mAudio->showpcm = showPcm;
+        seek(start);
+        return true;
+    }
+    return false;
 }

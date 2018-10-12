@@ -161,4 +161,10 @@
             android:onClick="stopRecord"
             android:text="停止录制" />
     </LinearLayout>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="裁剪"
+        android:onClick="cut" />
 </LinearLayout>

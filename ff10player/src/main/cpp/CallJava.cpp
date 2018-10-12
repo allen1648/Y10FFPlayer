@@ -23,6 +23,8 @@ CallJava::CallJava(_JavaVM *javaVM, JNIEnv *env, jobject *obj) {
     mJmethodError = env->GetMethodID(jclz, "onCallError", "(ILjava/lang/String;)V");
     mJmethodComplete = env->GetMethodID(jclz, "onCallComplete", "()V");
     mJmethodPcm2aac = env->GetMethodID(jclz, "pcm2aac", "(I[B)V");
+    mJmethodPcmInfo = env->GetMethodID(jclz, "onCallPcmInfo", "([BI)V");
+    mJmethodPcmRate = env->GetMethodID(jclz, "onCallPcmRate", "(I)V");
 
 }
 
@@ -165,6 +167,44 @@ void CallJava::onCallPcm2aac(int type, int size, void* buffer) {
         jniEnv->SetByteArrayRegion(jbuffer, 0, size, (const jbyte *)(buffer));
         jniEnv->CallVoidMethod(mJobj, mJmethodPcm2aac, size, jbuffer);
         jniEnv->DeleteLocalRef(jbuffer);
+        mJavaVM->DetachCurrentThread();
+    }
+}
+
+void CallJava::onCallPcmInfo(int type, void * buffer, int bufferSize) {
+    if (type == MAIN_THREAD) {
+        jbyteArray jbuffer = mJniEnv->NewByteArray(bufferSize);
+        mJniEnv->SetByteArrayRegion(jbuffer, 0, bufferSize, (const jbyte *) buffer);
+        mJniEnv->CallVoidMethod(mJobj, mJmethodPcmInfo, jbuffer, bufferSize);
+        mJniEnv->DeleteLocalRef(jbuffer);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *jniEnv;
+        if (mJavaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK) {
+            if (LOG_DEBUG) {
+                LOGE("call onCallPcmInfo wrong");
+            }
+            return;
+        }
+        jbyteArray jbuffer = jniEnv->NewByteArray(bufferSize);
+        jniEnv->SetByteArrayRegion(jbuffer, 0, bufferSize, (const jbyte *) buffer);
+        jniEnv->CallVoidMethod(mJobj, mJmethodPcmInfo, jbuffer, bufferSize);
+        jniEnv->DeleteLocalRef(jbuffer);
+        mJavaVM->DetachCurrentThread();
+    }
+}
+
+void CallJava::onCallPcmRate(int type, int sampleRate) {
+    if (type == MAIN_THREAD) {
+        mJniEnv->CallVoidMethod(mJobj, mJmethodPcmRate, sampleRate);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *jniEnv;
+        if (mJavaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK) {
+            if (LOG_DEBUG) {
+                LOGE("call onCallPcmRate wrong");
+            }
+            return;
+        }
+        jniEnv->CallVoidMethod(mJobj, mJmethodPcmRate, sampleRate);
         mJavaVM->DetachCurrentThread();
     }
 }

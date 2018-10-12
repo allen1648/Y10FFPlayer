@@ -6,6 +6,11 @@ Y10Audio::Y10Audio(PlayStatus *playStatus, int sampleRate, CallJava *callJava) {
     this->mPlayStatus = playStatus;
     this->mSampleRate = sampleRate;//采样率一般44100
     this->mCallJava = callJava;
+    //裁剪参数
+    this->cut = false;
+    this->endTime = 0;
+    this->showpcm = false;
+
     mY10Queue = new Y10Queue(playStatus);
     mResampleBuffer = (uint8_t *) av_malloc(sampleRate * 2 * 2);
     mSoundTouchBuffer = (SAMPLETYPE *) malloc(sampleRate * 2 * 2);
@@ -27,6 +32,7 @@ int Y10Audio::resampleAudio(void **out) {
             av_usleep(1000 * 100);
             continue;
         }
+
         //加载中判断
         if (mY10Queue->getQueueSize() == 0) {//加载中
             if (!mPlayStatus->mLoad) {
@@ -119,11 +125,6 @@ int Y10Audio::resampleAudio(void **out) {
             mClockTime = mNowTime;
             *out = mResampleBuffer;
 
-            //释放资源
-//            av_packet_free(&mAVPacket);
-//            av_free(mAVPacket);
-//            mAVPacket = NULL;
-
             av_frame_free(&mAVFrame);
             av_free(mAVFrame);
             mAVFrame = NULL;
@@ -197,6 +198,17 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
 //                audio->mCallJava->onCallPcm2aac(CHILD_THREAD, sampleNum * 2 * 2, audio->mSoundTouchBuffer);
             }
             (*audio->pcmBufferQueue)->Enqueue(audio->pcmBufferQueue, (char *) audio->mSoundTouchBuffer, sampleNum * 2 * 2);
+
+            //裁剪功能
+            if(audio->cut) {
+                if(audio->showpcm) {
+                    audio->mCallJava->onCallPcmInfo(CHILD_THREAD, audio->mSoundTouchBuffer, sampleNum * 2 * 2);
+                }
+                if(audio->mClockTime > audio->endTime) {
+                    LOGE("裁剪退出...");
+                    audio->mPlayStatus->mExited = true;
+                }
+            }
         }
     }
 }

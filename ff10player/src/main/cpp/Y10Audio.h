@@ -45,6 +45,10 @@ public:
     float mPitch = 1.0f;//声调
     float mSpeed = 1.0f;//播放速度
 
+    bool cut;
+    int endTime;
+    bool showpcm;
+
     //OpenSLES
     // 引擎接口
     SLObjectItf engineObject = NULL;

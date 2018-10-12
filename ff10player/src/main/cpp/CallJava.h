@@ -7,6 +7,7 @@
 
 #include "jni.h"
 #include <linux/stddef.h>
+#include <zconf.h>
 #include "AndroidLog.h"
 
 #define MAIN_THREAD 0
@@ -28,6 +29,8 @@ public:
     jmethodID mJmethodStop;
     jmethodID mJmethodNext;
     jmethodID mJmethodPcm2aac;
+    jmethodID mJmethodPcmInfo;
+    jmethodID mJmethodPcmRate;
 
 public:
     CallJava(JavaVM *javaVM, JNIEnv *env, jobject *obj);
@@ -42,6 +45,8 @@ public:
     void onCallStop(int type);
     void onCallNext(int type);
     void onCallPcm2aac(int type, int size, void* buffer);
+    void onCallPcmInfo(int type, void * buffer, int bufferSize);
+    void onCallPcmRate(int type, int sampleRate);
 };
 
 #endif //INC_10FFMPEGPLAYER_CALLJAVA_H

@@ -208,3 +208,12 @@ Java_com_stan_ff10player_FF10Player_nStopStartRecord(JNIEnv *env, jobject instan
         ffmpeg->startStopRecord(stop);
     }
 }
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_stan_ff10player_FF10Player_nCutAudio(JNIEnv *env, jobject instance, jint start, jint end, jboolean showPcm) {
+    if(ffmpeg != NULL) {
+        return ffmpeg->cutAudio(start, end, showPcm);
+    }
+    return false;
+}

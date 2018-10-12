@@ -46,6 +46,8 @@ public:
     bool isPlaying();
     int getCurrentPosition();
     void startStopRecord(bool start);
+
+    bool cutAudio(int start, int end, bool showPcm);
 };
 
 #endif //INC_10FFMPEGPLAYER_Y10FFMPEG_H

@@ -25,7 +25,7 @@ public class FF10Encoder {
     private double mRecordTime;
     private FF10Player mPlayer;
 
-    public FF10Encoder(FF10Player player){
+    public FF10Encoder(FF10Player player) {
         mPlayer = player;
         mSampleRate = player.getSampleRate();
     }

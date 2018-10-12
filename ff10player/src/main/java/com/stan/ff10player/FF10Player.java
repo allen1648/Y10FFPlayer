@@ -2,6 +2,8 @@ package com.stan.ff10player;
 
 import android.util.Log;
 
+import com.stan.ff10player.listener.OnCallPcmInfoListener;
+import com.stan.ff10player.listener.OnCallPcmRateListener;
 import com.stan.ff10player.listener.OnErrorListener;
 import com.stan.ff10player.listener.OnLoadListener;
 import com.stan.ff10player.listener.OnPreparedListener;
@@ -31,6 +33,8 @@ public class FF10Player {
     private OnTimeChangedListener mOnTimeChangedListener;
     private OnLoadListener mOnLoadListener;
     private OnErrorListener mOnErrorListener;
+    private OnCallPcmInfoListener mOnCallPcmInfoListener;
+    private OnCallPcmRateListener mOnCallPcmRateListener;
 
     private String mSourceUrl;
     private int mDuration;
@@ -66,6 +70,14 @@ public class FF10Player {
 
     public void setOnErrorListener(OnErrorListener listener) {
         this.mOnErrorListener = listener;
+    }
+
+    public void setOnCallPcmInfoListener(OnCallPcmInfoListener listener) {
+        this.mOnCallPcmInfoListener = listener;
+    }
+
+    public void setOnCallPcmRateListener(OnCallPcmRateListener listener) {
+        this.mOnCallPcmRateListener = listener;
     }
 
     public void setDataSourceAndPrepare(String url) {
@@ -169,6 +181,15 @@ public class FF10Player {
         return nGetSampleRate();
     }
 
+    public void cutAudio() {
+        if(nCutAudio(20, 30, true)) {
+            start();
+        } else {
+            stop();
+            onCallError(2001, "cutaudio params is wrong");
+        }
+    }
+
     /* called from jni */
     private void onCallPrepared() {
         mDuration = nGetDuration();
@@ -214,6 +235,18 @@ public class FF10Player {
         mAACEncoder.releaseMediaCodec();
     }
 
+    private void onCallPcmInfo(byte[] buffer, int bufferSize){
+        if(mOnCallPcmInfoListener != null) {
+            mOnCallPcmInfoListener.onCallPcmInfo(buffer, bufferSize);
+        }
+    }
+
+    private void onCallPcmRate(int sampleRate){
+        if(mOnCallPcmRateListener != null) {
+            mOnCallPcmRateListener.onCallPcmRate(sampleRate);
+        }
+    }
+
     private native int nPrepare(String url);
 
     private native int nStart();
@@ -246,6 +279,6 @@ public class FF10Player {
 
     private native void nStopStartRecord(boolean start);
 
-
+    private native boolean nCutAudio(int start, int end, boolean showPcm);
 
 }
