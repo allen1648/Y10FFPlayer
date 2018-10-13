@@ -144,7 +144,7 @@ enum AVAppToDevMessageType {
     AV_APP_TO_DEV_WINDOW_REPAINT = MKBETAG('R','E','P','A'),
 
     /**
-     * Request pause/resume.
+     * Request pause/play.
      *
      * Application requests pause/unpause playback.
      * Mostly usable with devices that have internal buffer.

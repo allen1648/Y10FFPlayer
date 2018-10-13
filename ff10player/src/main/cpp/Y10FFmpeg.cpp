@@ -37,8 +37,6 @@ void Y10FFmpeg::prepare() {
 void Y10FFmpeg::decodeFFmpegThread() {
     LOGI("ffmpeg decodeFFmpegThread");
     pthread_mutex_lock(&mInitMutex);
-    //注册
-    av_register_all();
     avformat_network_init();
     //申请内存
     mAVFormatContext = avformat_alloc_context();

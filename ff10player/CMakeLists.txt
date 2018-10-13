@@ -35,71 +35,71 @@ add_library( # Sets the name of the library.
         ${SOUNDTOUCH_CPPDIR}/TDStretch.cpp
         )
 
-add_library(avcodec-57 SHARED IMPORTED)
+add_library(avcodec-58 SHARED IMPORTED)
 set_target_properties(
-        avcodec-57
+        avcodec-58
         PROPERTIES IMPORTED_LOCATION
-        ${FFMPEG_SO_DIR}/libavcodec-57.so
+        ${FFMPEG_SO_DIR}/libavcodec-58.so
 )
 
-add_library(avdevice-57 SHARED IMPORTED)
+add_library(avdevice-58 SHARED IMPORTED)
 set_target_properties(
-        avdevice-57
+        avdevice-58
         PROPERTIES IMPORTED_LOCATION
-        ${FFMPEG_SO_DIR}/libavdevice-57.so
+        ${FFMPEG_SO_DIR}/libavdevice-58.so
 )
 
-add_library(avfilter-6 SHARED IMPORTED)
+add_library(avfilter-7 SHARED IMPORTED)
 set_target_properties(
-        avfilter-6
+        avfilter-7
         PROPERTIES IMPORTED_LOCATION
-        ${FFMPEG_SO_DIR}/libavfilter-6.so
+        ${FFMPEG_SO_DIR}/libavfilter-7.so
 )
 
-add_library(avformat-57 SHARED IMPORTED)
+add_library(avformat-58 SHARED IMPORTED)
 set_target_properties(
-        avformat-57
+        avformat-58
         PROPERTIES IMPORTED_LOCATION
-        ${FFMPEG_SO_DIR}/libavformat-57.so
+        ${FFMPEG_SO_DIR}/libavformat-58.so
 )
 
-add_library(avutil-55 SHARED IMPORTED)
+add_library(avutil-56 SHARED IMPORTED)
 set_target_properties(
-        avutil-55
+        avutil-56
         PROPERTIES IMPORTED_LOCATION
-        ${FFMPEG_SO_DIR}/libavutil-55.so
+        ${FFMPEG_SO_DIR}/libavutil-56.so
 )
 
-add_library(postproc-54 SHARED IMPORTED)
+add_library(postproc-55 SHARED IMPORTED)
 set_target_properties(
-        postproc-54
+        postproc-55
         PROPERTIES IMPORTED_LOCATION
-        ${FFMPEG_SO_DIR}/libpostproc-54.so
+        ${FFMPEG_SO_DIR}/libpostproc-55.so
 )
 
-add_library(swresample-2 SHARED IMPORTED)
+add_library(swresample-3 SHARED IMPORTED)
 set_target_properties(
-        swresample-2
+        swresample-3
         PROPERTIES IMPORTED_LOCATION
-        ${FFMPEG_SO_DIR}/libswresample-2.so
+        ${FFMPEG_SO_DIR}/libswresample-3.so
 )
 
-add_library(swscale-4 SHARED IMPORTED)
+add_library(swscale-5 SHARED IMPORTED)
 set_target_properties(
-        swscale-4
+        swscale-5
         PROPERTIES IMPORTED_LOCATION
-        ${FFMPEG_SO_DIR}/libswscale-4.so
+        ${FFMPEG_SO_DIR}/libswscale-5.so
 )
 
 target_link_libraries( # Specifies the target library.
         native-lib
-        avcodec-57
-        avdevice-57
-        avfilter-6
-        avformat-57
-        avutil-55
-        postproc-54
-        swresample-2
-        swscale-4
+        avcodec-58
+        avdevice-58
+        avfilter-7
+        avformat-58
+        avutil-56
+        postproc-55
+        swresample-3
+        swscale-5
         OpenSLES
         log)
