@@ -4,6 +4,8 @@
 #include "Y10Queue.h"
 #include "CallJava.h"
 #include "SoundTouch.h"
+#include "Y10BufferQueue.h"
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libswresample/swresample.h>
@@ -32,11 +34,12 @@ public:
     uint8_t *mOutBuffer = NULL;//
     AVCodecContext *mAVCodecContext = NULL;
     AVCodecParameters *mCodecpar = NULL;
-    Y10Queue *mY10Queue = NULL;
+    Y10Queue *mY10Queue = NULL;//AVPacket的queue
     PlayStatus *mPlayStatus = NULL;
     AVPacket *mAVPacket = NULL;
     AVFrame *mAVFrame = NULL;
     pthread_t mPlayThread;
+    pthread_t mPcmCallbackThread;
     CallJava *mCallJava = NULL;
     AVRational mTimeBase;//分子/分母 就是一个Frame的时间
     double mClockTime;//总的播放时长,暂时认定为duration
@@ -67,10 +70,13 @@ public:
 
     //缓冲器队列接口
     SLAndroidSimpleBufferQueueItf pcmBufferQueue = NULL;
-
+    //分包用的queue
+    Y10BufferQueue *mBufferQueue = NULL;
     //soundTouch
     SoundTouch *mSoundTouch = NULL;
     SAMPLETYPE *mSoundTouchBuffer = NULL;
+    int mDefaultPcmSize = 4096;
+
 
 public:
     Y10Audio(PlayStatus *playStatus, int sampleRate, CallJava *callJava);

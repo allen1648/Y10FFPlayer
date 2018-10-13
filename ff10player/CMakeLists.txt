@@ -16,6 +16,8 @@ add_library( # Sets the name of the library.
         ${CPPDIR}/Y10FFmpeg.cpp
         ${CPPDIR}/PlayStatus.cpp
         ${CPPDIR}/Y10Queue.cpp
+        ${CPPDIR}/Y10BufferQueue.cpp
+        ${CPPDIR}/PCMBean.cpp
         # soundTouch
         ${SOUNDTOUCH_CPPDIR}/AAFilter.cpp
         ${SOUNDTOUCH_CPPDIR}/BPMDetect.cpp

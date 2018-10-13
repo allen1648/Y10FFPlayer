@@ -31,6 +31,7 @@ public class FF10Encoder {
     }
 
     public void pcm2aac(int size, byte[] buffer) {
+        Log.i("yyl", "pcm2aac size:"+size);
         if (buffer != null && mEncoder != null) {
             int sampleRate = mSampleRate;
             mRecordTime += (double) size / (double)(sampleRate * 2 * 2);

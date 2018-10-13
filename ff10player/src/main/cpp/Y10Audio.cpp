@@ -180,8 +180,8 @@ int Y10Audio::resampleWithSoundTouch() {
     return 0;
 }
 
-void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
-//    LOGI("pcmBufferCallBack");
+void openSLBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
+//    LOGI("openSLBufferCallBack");
     Y10Audio *audio = (Y10Audio *) context;
     if (audio != NULL) {
         int sampleNum = audio->resampleWithSoundTouch();
@@ -193,12 +193,10 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
                 //回调应用层
                 audio->mCallJava->onCallTimeChanged(CHILD_THREAD, audio->mClockTime, audio->mDuration);
             }
-            //录音到文件
-            if(audio->mRecordingPcm) {
-//                audio->mCallJava->onCallPcm2aac(CHILD_THREAD, sampleNum * 2 * 2, audio->mSoundTouchBuffer);
-            }
-            (*audio->pcmBufferQueue)->Enqueue(audio->pcmBufferQueue, (char *) audio->mSoundTouchBuffer, sampleNum * 2 * 2);
+            //分包用的buffer跟播放无关
+            audio->mBufferQueue->putBuffer(audio->mSoundTouchBuffer, sampleNum * 2 * 2);
 
+            (*audio->pcmBufferQueue)->Enqueue(audio->pcmBufferQueue, (char *) audio->mSoundTouchBuffer, sampleNum * 2 * 2);
             //裁剪功能
             if(audio->cut) {
                 if(audio->showpcm) {
@@ -272,11 +270,11 @@ void Y10Audio::initOpenSLES() {
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_BUFFERQUEUE, &pcmBufferQueue);
 
     //缓冲接口回调
-    (*pcmBufferQueue)->RegisterCallback(pcmBufferQueue, pcmBufferCallBack, this);
+    (*pcmBufferQueue)->RegisterCallback(pcmBufferQueue, openSLBufferCallBack, this);
 
     //获取播放状态接口
     (*pcmPlayerImpl)->SetPlayState(pcmPlayerImpl, SL_PLAYSTATE_PLAYING);
-    pcmBufferCallBack(pcmBufferQueue, this);
+    openSLBufferCallBack(pcmBufferQueue, this);
 
 }
 
@@ -286,8 +284,59 @@ void *decodePlay(void *data) {
     pthread_exit(&audio->mPlayThread);
 }
 
+void *pcmCallBack(void *data) {
+    Y10Audio *audio = (Y10Audio *) data;
+    while (audio->mPlayStatus != NULL && !audio->mPlayStatus->mExited) {
+        PCMBean *pcmBean = NULL;
+        audio->mBufferQueue->getBuffer(&pcmBean);
+        if (pcmBean == NULL) {
+            continue;
+        }
+//        LOGI("pcmbean buffer size is %d", pcmBean->mBufferSize);
+        if (pcmBean->mBufferSize <= audio->mDefaultPcmSize) {//不用分包
+            if (audio->mRecordingPcm) {
+                audio->mCallJava->onCallPcm2aac(CHILD_THREAD, pcmBean->mBufferSize, pcmBean->mBuffer);
+            }
+            if (audio->showpcm) {
+                audio->mCallJava->onCallPcmInfo(CHILD_THREAD, pcmBean->mBuffer, pcmBean->mBufferSize);
+            }
+        } else {
+            int pack_num = pcmBean->mBufferSize / audio->mDefaultPcmSize;
+            int pack_sub = pcmBean->mBufferSize % audio->mDefaultPcmSize;
+            for (int i = 0; i < pack_num; i++) {
+                char *bf = static_cast<char *>(malloc(audio->mDefaultPcmSize));
+                memcpy(bf, pcmBean->mBuffer + i * audio->mDefaultPcmSize, audio->mDefaultPcmSize);
+                if (audio->mRecordingPcm) {
+                    audio->mCallJava->onCallPcm2aac(CHILD_THREAD, audio->mDefaultPcmSize, bf);
+                }
+                if (audio->showpcm) {
+                    audio->mCallJava->onCallPcmInfo(CHILD_THREAD, bf, audio->mDefaultPcmSize);
+                }
+                free(bf);
+                bf = NULL;
+            }
+
+            if (pack_sub > 0) {
+                char *bf = static_cast<char *>(malloc(pack_sub));
+                memcpy(bf, pcmBean->mBuffer + pack_num * audio->mDefaultPcmSize, pack_sub);
+                if (audio->mRecordingPcm) {
+                    audio->mCallJava->onCallPcm2aac(CHILD_THREAD, pack_sub, bf);
+                }
+                if (audio->showpcm) {
+                    audio->mCallJava->onCallPcmInfo(CHILD_THREAD, bf, pack_sub);
+                }
+            }
+        }
+        delete (pcmBean);
+        pcmBean = NULL;
+    }
+    pthread_exit(&audio->mPcmCallbackThread);
+}
+
 void Y10Audio::start() {
+    mBufferQueue = new Y10BufferQueue(mPlayStatus);
     pthread_create(&mPlayThread, NULL, decodePlay, this);
+    pthread_create(&mPcmCallbackThread, NULL, pcmCallBack, this);
 }
 
 void Y10Audio::resume() {
