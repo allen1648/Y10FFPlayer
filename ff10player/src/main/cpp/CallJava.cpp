@@ -25,6 +25,7 @@ CallJava::CallJava(_JavaVM *javaVM, JNIEnv *env, jobject *obj) {
     mJmethodPcm2aac = env->GetMethodID(jclz, "pcm2aac", "(I[B)V");
     mJmethodPcmInfo = env->GetMethodID(jclz, "onCallPcmInfo", "([BI)V");
     mJmethodPcmRate = env->GetMethodID(jclz, "onCallPcmRate", "(I)V");
+    mJmethodStop = env->GetMethodID(jclz, "onCallStop", "()V");
 
 }
 

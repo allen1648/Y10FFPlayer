@@ -227,10 +227,10 @@ void Y10FFmpeg::release() {
     mPlayStatus->mExited = true;
     pthread_mutex_lock(&mInitMutex);
 
-    //防止无限等待的处理
+    //防止打开url等无限等待的处理
     int sleepCount = 0;
     while (!mPrepareExit) {
-        if(sleepCount > 1000) {
+        if(sleepCount > 500) {
             mPrepareExit = true;
         }
 
@@ -238,7 +238,7 @@ void Y10FFmpeg::release() {
             LOGE("wait ffmpeg exit %d", sleepCount);
         }
         sleepCount++;
-        av_usleep(1000 * 10);//暂停10毫秒,总共是10秒
+        av_usleep(1000 * 10);//暂停10毫秒,总共是5秒
     }
 
     if(mAudio != NULL) {
@@ -262,33 +262,6 @@ void Y10FFmpeg::release() {
     }
 
     pthread_mutex_unlock(&mInitMutex);
-}
-
-void Y10FFmpeg::forceStop() {
-    mPlayStatus->mExited = true;
-    mPrepareExit = true;
-    pthread_mutex_lock(&mInitMutex);
-    if(mAudio != NULL) {
-        mAudio->release();
-        delete(mAudio);
-        mAudio = NULL;
-    }
-
-    if(mAVFormatContext != NULL) {
-        avformat_close_input(&mAVFormatContext);
-        avformat_free_context(mAVFormatContext);
-        mAVFormatContext = NULL;
-    }
-
-    if(mCallJava != NULL) {
-        mCallJava = NULL;
-    }
-
-    if(mPlayStatus != NULL) {
-        mPlayStatus = NULL;
-    }
-    pthread_mutex_unlock(&mInitMutex);
-
 }
 
 void Y10FFmpeg::setVolume(int value) {

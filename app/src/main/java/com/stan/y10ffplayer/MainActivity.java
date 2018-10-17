@@ -8,12 +8,15 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.stan.ff10player.FF10Player;
 import com.stan.ff10player.listener.OnCallPcmInfoListener;
 import com.stan.ff10player.listener.OnCallPcmRateListener;
+import com.stan.ff10player.listener.OnCompleteListener;
 import com.stan.ff10player.listener.OnErrorListener;
 import com.stan.ff10player.listener.OnLoadListener;
 import com.stan.ff10player.listener.OnPreparedListener;
@@ -35,6 +38,7 @@ public class MainActivity extends Activity {
     private static final int SET_PROGRESS = 1;
     private int mPosition;
     private FF10Player mPlayer = new FF10Player();
+    private EditText mInputET;
     private TextView mProgressTV;
     private TextView mVolumeTV;
     private SeekBar mProgressBar;
@@ -44,10 +48,14 @@ public class MainActivity extends Activity {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
-                case SET_PROGRESS:
-                    mProgressTV.setText(TimeUtil.secondsToDateFormat(msg.arg1, false) + "/" + TimeUtil.secondsToDateFormat(msg.arg2, false));
+            case SET_PROGRESS:
+                mProgressTV.setText(TimeUtil.secondsToDateFormat(msg.arg1, false) + "/" + TimeUtil.secondsToDateFormat(msg.arg2, false));
+                if (msg.arg2 == 0) {
+                    mProgressBar.setProgress(0);
+                } else {
                     mProgressBar.setProgress(msg.arg1 * 100 / msg.arg2);
-                    break;
+                }
+                break;
             }
         }
     };
@@ -70,6 +78,8 @@ public class MainActivity extends Activity {
     }
 
     private void initView() {
+        mInputET = findViewById(R.id.et_input);
+        mInputET.setText("/sdcard/input.mp3");
         mProgressTV = findViewById(R.id.tv_progress);
         mVolumeTV = findViewById(R.id.tv_volume_sb);
         mProgressBar = findViewById(R.id.seek_bar);
@@ -99,7 +109,7 @@ public class MainActivity extends Activity {
 
         mVolumeBar = findViewById(R.id.sb_volume);
         mVolumeBar.setMax(100);
-        mVolumeBar.setProgress(50);
+        mVolumeBar.setProgress(100);
         mVolumeBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -168,6 +178,16 @@ public class MainActivity extends Activity {
         mPlayer.setOnErrorListener(new OnErrorListener() {
             @Override
             public void onError(int code, String msg) {
+                switch (code) {
+                case FF10Player.ERROR_CAN_NOT_OPEN_INPUT:
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "can't open input", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    break;
+                }
                 LogUtil.i("yyl", "onError code:" + code + " msg:" + msg);
             }
         });
@@ -183,13 +203,17 @@ public class MainActivity extends Activity {
                 Log.i("yyl", "sampleRate:" + sampleRate);
             }
         });
+        mPlayer.setOnCompleteListener(new OnCompleteListener() {
+            @Override
+            public void onComplete() {
+                mHandler.obtainMessage(SET_PROGRESS, 0, 0).sendToTarget();
+            }
+        });
         mPlayer.setVolume(50);
     }
 
     public void prepare(View view) {
-//        mPlayer.setDataSourceAndPrepare("http://cmp3.o2ting.c1om:8081/mp3_32k/100374/873790/bazc001.mp3?ver=TYYDYSB_A1.5.4.2&pno=0000&userName=&audio=1188555&md5=wnVgHti5zygNGNpdnxFZUA&expires=1539941128");
-//        mPlayer.setDataSourceAndPrepare("/sdcard/input.mp3");
-        mPlayer.setDataSourceAndPrepare("/sdcard/zly.mp3");
+        mPlayer.setDataSourceAndPrepare(mInputET.getText().toString());
     }
 
     public void resume(View view) {

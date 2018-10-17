@@ -120,14 +120,6 @@ Java_com_stan_ff10player_FF10Player_nSeek(JNIEnv *env, jobject instance, jint se
     return 0;
 }
 
-extern "C"
-JNIEXPORT jint JNICALL
-Java_com_stan_ff10player_FF10Player_nRelease(JNIEnv *env, jobject instance) {
-    if(ffmpeg != NULL) {
-        ffmpeg->forceStop();
-    }
-    return 0;
-}
 
 extern "C"
 JNIEXPORT jint JNICALL

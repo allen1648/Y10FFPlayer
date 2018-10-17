@@ -36,7 +36,6 @@ public:
     void resume();
     void pause();
     void release();
-    void forceStop();
     void seek(int64_t secs);
     void setVolume(int value);
     void setMute(int mute);

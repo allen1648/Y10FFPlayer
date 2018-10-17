@@ -34,16 +34,16 @@ int Y10Audio::resampleAudio(void **out) {
         }
 
         //加载中判断
-        if (mY10Queue->getQueueSize() == 0) {//加载中
-            if (!mPlayStatus->mLoad) {
-                mPlayStatus->mLoad = true;
+        if (mY10Queue->getQueueSize() == 0) {//加载中回调给客户端
+            if (!mPlayStatus->mLoadingQueue) {
+                mPlayStatus->mLoadingQueue = true;
                 mCallJava->onCallLoad(CHILD_THREAD, true);
             }
             av_usleep(1000 * 100);
             continue;
         } else {
-            if (mPlayStatus->mLoad) {
-                mPlayStatus->mLoad = false;
+            if (mPlayStatus->mLoadingQueue) {
+                mPlayStatus->mLoadingQueue = false;
                 mCallJava->onCallLoad(CHILD_THREAD, false);
             }
         }

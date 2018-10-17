@@ -7,6 +7,11 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+    <EditText
+        android:id="@+id/et_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -58,7 +63,7 @@
         android:id="@+id/tv_volume_sb"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="seekbar" />
+        android:text="音量" />
 
     <SeekBar
         android:id="@+id/sb_volume"
@@ -75,14 +80,14 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:onClick="volumeLeft"
-            android:text="left" />
+            android:text="左声道" />
 
         <Button
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:onClick="volumeRight"
-            android:text="right" />
+            android:text="右声道" />
 
         <Button
             android:id="@+id/v_center"
@@ -90,7 +95,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:onClick="volumeCenter"
-            android:text="stereo" />
+            android:text="立体声" />
     </LinearLayout>
 
     <LinearLayout
@@ -165,6 +170,6 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="裁剪"
-        android:onClick="cut" />
+        android:onClick="cut"
+        android:text="裁剪" />
 </LinearLayout>
