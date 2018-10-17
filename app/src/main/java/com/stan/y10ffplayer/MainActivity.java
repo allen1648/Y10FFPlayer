@@ -209,7 +209,7 @@ public class MainActivity extends Activity {
                 mHandler.obtainMessage(SET_PROGRESS, 0, 0).sendToTarget();
             }
         });
-        mPlayer.setVolume(50);
+//        mPlayer.setVolume(50);
     }
 
     public void prepare(View view) {
